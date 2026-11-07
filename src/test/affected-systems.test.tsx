@@ -13,7 +13,7 @@ vi.mock("@/integrations/supabase/client", () => ({ supabase: { channel: () => ({
 const id = "11111111-1111-1111-1111-111111111111";
 const row = { id: "22222222-2222-2222-2222-222222222222", incident_id: id, resource_name: "Server", data_description: "Files", assessment: "suspected", data_conditions: ["encrypted", "unavailable"], containment_status: "in progress", investigation_notes: "Investigating", created_by: id, updated_by: id, created_at: "2026-11-07T22:00:00Z", updated_at: "2026-11-07T22:00:00Z" };
 const fields = { resourceName: "Server", dataDescription: "Files", assessment: "suspected", dataConditions: ["encrypted", "unavailable"], containmentStatus: "in progress", investigationNotes: "Investigating" };
-beforeEach(() => { vi.clearAllMocks(); list.mockResolvedValue([]); membership.mockResolvedValue("commander"); subscribe.mockReturnValue({}); });
+beforeEach(() => { vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} }); vi.clearAllMocks(); list.mockResolvedValue([]); membership.mockResolvedValue("commander"); subscribe.mockReturnValue({}); });
 afterEach(cleanup);
 const client = () => new QueryClient({ defaultOptions: { queries: { retry: false } } });
 it("rejects actor, time, role and incident-move overrides", () => {

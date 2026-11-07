@@ -49,7 +49,7 @@ export function RealAffectedSystems({ incidentId, userId }: { incidentId: string
   </section>;
 }
 
-export function AffectedSystemForm({ incidentId, userId, record, onBusy, onSaved }: { incidentId: string; userId: string; record?: AffectedSystem; onBusy?: (busy: boolean) => void; onSaved: () => void }) {
+export function AffectedSystemForm({ incidentId, userId, record, onBusy, onSaved }: { incidentId: string; userId: string; record?: AffectedSystem | undefined; onBusy?: (busy: boolean) => void; onSaved: () => void }) {
   const [input, setInput] = useState(() => systemFields(record));
   const [validation, setValidation] = useState<string | null>(null);
   const lock = useRef(false);

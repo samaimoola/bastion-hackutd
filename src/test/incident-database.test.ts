@@ -218,18 +218,18 @@ describe("Incident database authorization", () => {
     expect((await db.query("SELECT role FROM public.incident_invitations")).rows).toHaveLength(0);
   });
   async function addSystem(conditions = ["encrypted", "exfiltrated"]) {
-    const rows = await protectedQuery("SELECT (public.add_incident_affected_system($1,'File server','Customer files','suspected',$2,'in progress','Under investigation')).*", [incident, conditions]);
+    const rows = await protectedQuery("SELECT * FROM public.add_incident_affected_system($1,'File server','Customer files','suspected',$2,'in progress','Under investigation')", [incident, conditions]);
     return rows.rows[0] as { id: string; incident_id: string; created_by: string; updated_by: string; created_at: Date; updated_at: Date; data_conditions: string[] };
   }
   async function editSystem(id: string) {
-    return protectedQuery("SELECT (public.update_incident_affected_system($1,'Updated server','Files','confirmed',ARRAY['unavailable'],'contained','Resolved')).*", [id]);
+    return protectedQuery("SELECT * FROM public.update_incident_affected_system($1,'Updated server','Files','confirmed',ARRAY['unavailable'],'contained','Resolved')", [id]);
   }
   it("persists multiple conditions with trusted creator/editor identities and times", async () => {
     const row = await addSystem();
     expect(row.created_by).toBe(commander); expect(row.updated_by).toBe(commander);
     expect(row.data_conditions).toEqual(["encrypted", "exfiltrated"]);
     await identity(responder); await editSystem(row.id);
-    const changed = (await db.query("SELECT * FROM public.incident_affected_systems WHERE id=$1", [row.id])).rows[0];
+    const changed = (await db.query<{ created_at: Date; updated_at: Date }>("SELECT * FROM public.incident_affected_systems WHERE id=$1", [row.id])).rows[0];
     expect(changed).toMatchObject({ created_by: commander, updated_by: responder, assessment: "confirmed", containment_status: "contained", resource_name: "Updated server" });
     expect(changed?.created_at).toEqual(row.created_at);
     expect(new Date(String(changed?.updated_at)).getTime()).toBeGreaterThanOrEqual(new Date(row.created_at).getTime());
