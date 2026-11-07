@@ -73,7 +73,7 @@ describe("New incident submission", () => {
     if (!form) throw new Error("Form missing");
     fireEvent.submit(form); fireEvent.submit(form);
     await waitFor(() => expect(create).toHaveBeenCalledTimes(1));
-    expect(create).toHaveBeenCalledWith({ data: { title: "VPN compromise", description: "Confirmed login anomaly", severity: "Medium", stage: "Detection" } });
+    expect(create.mock.calls[0]?.[0]).toEqual({ data: { title: "VPN compromise", description: "Confirmed login anomaly", severity: "Medium", stage: "Detection" } });
     await act(async () => resolve(record));
     await waitFor(() => expect(onCreated).toHaveBeenCalledWith(record));
     expect(client.getQueryState(incidentKeys.list("user-a"))?.isInvalidated).toBe(true);
