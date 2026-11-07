@@ -1,10 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { act, renderHook } from "@testing-library/react";
+import { act, fireEvent, render, renderHook, screen, waitFor, cleanup } from "@testing-library/react";
+import { WorkspaceTimeline } from "@/components/workspace-timeline";
 import { DemoProvider, useDemo } from "@/lib/demo-store";
 import { workspaceStats, responseBrief } from "@/lib/workspace-api";
 import { eventInput, timelineInputSchema } from "@/lib/workspace-models";
 
 describe("Workspace records", () => {
+  it("records a submitted update through the timeline form", async () => {
+    render(<DemoProvider><WorkspaceTimeline open={true} setOpen={() => {}} /></DemoProvider>);
+    fireEvent.change(screen.getByLabelText("Update"), { target: { value: "Confirmed backup mount completed" } });
+    fireEvent.change(screen.getByLabelText("Event time (UTC)"), { target: { value: "2026-11-07T06:00" } });
+    fireEvent.click(screen.getByRole("button", { name: "Record update" }));
+    await waitFor(() => expect(screen.getByText("Confirmed backup mount completed")).toBeInTheDocument());
+    expect(screen.getByRole("status")).toHaveTextContent("Update recorded in demo data");
+    cleanup();
+  });
   it("derives affected-system counts and excludes completed urgent tasks", () => {
     const { result } = renderHook(() => useDemo(), { wrapper: DemoProvider });
     const stats = workspaceStats(result.current.systems, result.current.tasks);

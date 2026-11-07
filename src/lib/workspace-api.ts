@@ -27,7 +27,7 @@ export function workspaceStats(systems: System[], tasks: Task[]) {
 export function responseBrief(incident: Incident, systems: System[], tasks: Task[], timeline: TimelineEntry[]) {
   const { affected, open } = workspaceStats(systems, tasks);
   return {
-    impact: `${affected.length} affected systems; ${systems.filter((system) => system.status === "Encrypted").length} recorded as encrypted in demo records.`,
+    impact: `${incident.impact} ${affected.length} affected systems; ${systems.filter((system) => system.status === "Encrypted").length} recorded as encrypted in demo records.`,
     facts: timeline.filter((entry) => entry.type === "Finding").map((entry) => entry.text),
     unknowns: ["Exfiltration has not been assessed in these records.", ...systems.filter((system) => system.status === "Under review").map((system) => `${system.name}: assessment pending.`)],
     decisions: [...timeline].filter((entry) => entry.type === "Decision").sort((a, b) => b.at.localeCompare(a.at)).slice(0, 3).map((entry) => entry.text),

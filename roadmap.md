@@ -1,12 +1,13 @@
 # Bastion frontend improvements
 
 ## This increment
-- [ ] Compact, accessible workspace header and responsive tabs.
-- [ ] Typed frontend service boundary; retain explicit in-memory demo mode and existing authentication.
-- [ ] Overview with record-derived counts, urgent tasks, latest updates, and action shortcuts.
-- [ ] Validated Timeline entries with type, author, event time, recorded time, and UTC labels.
-- [ ] Deterministic Response Brief from existing records.
-- [ ] Test derived rules, validation, and available browser flows.
+- [x] Compact, accessible workspace header and responsive tabs.
+- [x] Typed frontend service boundary; retain explicit in-memory demo mode and existing authentication.
+- [x] Overview with record-derived counts, urgent tasks, latest updates, and action shortcuts.
+- [x] Validated Timeline entries with type, author, event time, recorded time, and UTC labels.
+- [x] Deterministic Response Brief from existing records.
+- [x] Test derived rules, validation, Timeline form submission, and signed-out redirect in the browser.
+- Signed-in workspace visual/end-to-end checks unavailable: external Supabase session cannot be supplied by the testing tools.
 
 ## Subsequent increments (deliberately deferred per brief)
 - Independent impact/containment and exfiltration fields, searchable assets, add/edit forms.

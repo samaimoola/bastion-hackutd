@@ -15,7 +15,7 @@ export type TimelineEvent = TimelineEntry;
 export interface ChatMessage { id: string; at: string; authorId: string; text: string }
 export interface Incident {
   id: string; title: string; severity: Severity; stage: Stage; commanderId: string;
-  declaredAt: string; lastUpdate: string; summary: string; nextActions: string[];
+  declaredAt: string; lastUpdate: string; summary: string; impact: string; nextActions: string[];
 }
 
 const now = () => new Date().toISOString();
@@ -40,6 +40,7 @@ const incident: Incident = {
   lastUpdate: "2026-11-07T18:55:00Z",
   summary:
     "Files on two finance file servers were encrypted with a .lockr extension and a ransom note was found. Initial access is suspected via a compromised VPN account. Affected hosts are isolated; backups are being validated.",
+  impact: "Finance file access is disrupted. Restoration remains pending backup validation; the extent of data exposure is unknown.",
   nextActions: [
     "Confirm integrity of last clean backup (Nov 6, 23:00)",
     "Reset credentials for all finance VPN accounts",
