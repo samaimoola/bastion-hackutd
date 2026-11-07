@@ -14,6 +14,12 @@ import { useWorkspace } from "@/lib/workspace-api";
 import { WorkspaceOverview } from "@/components/workspace-overview";
 import { WorkspaceTimeline } from "@/components/workspace-timeline";
 import { parseWorkspaceTab, type WorkspaceTab } from "@/lib/guide-navigation";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { notFound } from "@tanstack/react-router";
+import { incidentDetailOptions } from "@/lib/incident-queries";
+import { getIncidentInputSchema, NOT_FOUND_MESSAGE } from "@/lib/incident-models";
+import { IncidentError, IncidentLoading, IncidentNotFound } from "@/components/incident-states";
+import { LiveIncidentWorkspace } from "@/components/live-incident-workspace";
 
 const stages: Stage[] = ["Detection", "Containment", "Eradication", "Recovery", "Post-incident"];
 const severities: Severity[] = ["Critical", "High", "Medium", "Low"];
@@ -22,6 +28,15 @@ const taskStatuses: TaskStatus[] = ["Open", "In progress", "Blocked", "Done"];
 
 export const Route = createFileRoute("/_authenticated/incidents/$id")({
   validateSearch: (search: Record<string, unknown>): { tab?: WorkspaceTab } => ({ tab: parseWorkspaceTab(search['tab']) }),
+  loader: async ({ context, params }) => {
+    if (params.id === "INC-2026-0412") return;
+    if (!getIncidentInputSchema.safeParse({ id: params.id }).success) throw notFound();
+    try { await context.queryClient.fetchQuery(incidentDetailOptions(context.authUser.id, params.id)); }
+    catch (error) { if (error instanceof Error && error.message === NOT_FOUND_MESSAGE) throw notFound(); throw error; }
+  },
+  pendingComponent: IncidentLoading,
+  errorComponent: IncidentError,
+  notFoundComponent: IncidentNotFound,
   head: () => ({
     meta: [
       { title: "Incident workspace — Bastion" },
@@ -45,6 +60,20 @@ function Pick<T extends string>({ value, options, onChange, label, className = "
 }
 
 function Workspace() {
+  const { id } = Route.useParams();
+  return id === "INC-2026-0412" ? <DemoWorkspace /> : <RealWorkspace />;
+}
+
+function RealWorkspace() {
+  const { id } = Route.useParams();
+  const { authUser } = Route.useRouteContext();
+  const { data: incident } = useSuspenseQuery(incidentDetailOptions(authUser.id, id));
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  return <LiveIncidentWorkspace incident={incident} tab={search.tab ?? "overview"} setTab={(value) => { void navigate({ search: { tab: parseWorkspaceTab(value) }, replace: true }); }} />;
+}
+
+function DemoWorkspace() {
   const { incident: i, memberName, connection } = useWorkspace();
   const { id } = Route.useParams();
   const search = Route.useSearch();

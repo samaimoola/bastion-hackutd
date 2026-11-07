@@ -8,7 +8,8 @@ import {
   Scripts,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
+import { clearIncidentCache } from "@/lib/incident-queries";
 
 import { DemoProvider } from "@/lib/demo-store";
 import { supabase } from "@/integrations/supabase/client";
@@ -127,8 +128,14 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
+  const identity = useRef<string | null | undefined>(undefined);
   useEffect(() => {
-    const { data } = supabase.auth.onAuthStateChange((event) => {
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      const nextIdentity = session?.user.id ?? null;
+      if (identity.current !== nextIdentity) {
+        if (identity.current !== undefined) clearIncidentCache(queryClient);
+        identity.current = nextIdentity;
+      }
       if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
       router.invalidate();
       if (event === "SIGNED_OUT") queryClient.clear();
