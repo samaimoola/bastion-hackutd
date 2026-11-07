@@ -8,6 +8,7 @@ import type { WorkspaceTab } from "@/lib/guide-navigation";
 import { EditIncidentAction } from "./edit-incident-action";
 import { IncidentTeamAccess } from "./incident-team-access";
 import { RealAffectedSystems } from "./real-affected-systems";
+import { RealCommunications } from "./real-communications";
 
 const formatTime = (value: string) => new Date(value).toLocaleString("en-GB", { timeZone: "UTC", dateStyle: "medium", timeStyle: "short" });
 
@@ -31,7 +32,7 @@ export function LiveIncidentWorkspace({ incident: i, userId, tab, setTab }: { in
       <TabsContent value="systems"><RealAffectedSystems key={`${userId}:${i.id}`} incidentId={i.id} userId={userId} /></TabsContent>
       <TabsContent value="tasks"><UnconnectedSection title="Tasks" action="Add task" /></TabsContent>
       <TabsContent value="timeline"><UnconnectedSection title="Timeline entries" action="Record update" /></TabsContent>
-      <TabsContent value="chat"><UnconnectedSection title="Team messages" action="Send message" /></TabsContent>
+      <TabsContent value="chat"><RealCommunications key={`${userId}:${i.id}`} incidentId={i.id} userId={userId} /></TabsContent>
     </Tabs>
   </AppShell>;
 }

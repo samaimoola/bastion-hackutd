@@ -170,6 +170,44 @@ export type Database = {
           },
         ]
       }
+      incident_messages: {
+        Row: {
+          author_name: string | null
+          body: string
+          created_at: string
+          id: string
+          incident_id: string
+          request_id: string
+          sender_id: string
+        }
+        Insert: {
+          author_name?: string | null
+          body: string
+          created_at?: string
+          id?: string
+          incident_id: string
+          request_id: string
+          sender_id: string
+        }
+        Update: {
+          author_name?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          incident_id?: string
+          request_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_messages_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       incidents: {
         Row: {
           created_at: string
@@ -278,6 +316,24 @@ export type Database = {
       remove_incident_member: {
         Args: { _incident_id: string; _user_id: string }
         Returns: undefined
+      }
+      send_incident_message: {
+        Args: { _body: string; _incident_id: string; _request_id: string }
+        Returns: {
+          author_name: string | null
+          body: string
+          created_at: string
+          id: string
+          incident_id: string
+          request_id: string
+          sender_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "incident_messages"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       set_incident_member: {
         Args: {

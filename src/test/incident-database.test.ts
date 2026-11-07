@@ -43,6 +43,7 @@ describe("Incident database authorization", () => {
       CREATE TABLE auth.users (id uuid PRIMARY KEY);
       CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
       CREATE FUNCTION auth.role() RETURNS text LANGUAGE sql STABLE AS $$ SELECT current_setting('request.jwt.claim.role', true) $$;
+      CREATE FUNCTION auth.jwt() RETURNS jsonb LANGUAGE sql STABLE AS $$ SELECT coalesce(nullif(current_setting('request.jwt.claims', true), '')::jsonb, '{}'::jsonb) $$;
       GRANT USAGE ON SCHEMA auth TO anon, authenticated;
       INSERT INTO auth.users VALUES ('${commander}'), ('${responder}'), ('${viewer}'), ('${outsider}');
     `);
@@ -56,6 +57,7 @@ describe("Incident database authorization", () => {
       if (sql.includes("CREATE TABLE public.incident_invitations")) await db.exec(sql);
       if (sql.includes("REVOKE ALL ON public.incident_invitations" ) && !sql.includes("CREATE TABLE public.incident_invitations")) await db.exec(sql);
       if (sql.includes("CREATE TABLE public.incident_affected_systems")) await db.exec(sql.replace("ALTER PUBLICATION supabase_realtime ADD TABLE public.incident_affected_systems;", ""));
+      if (sql.includes("CREATE TABLE public.incident_messages")) await db.exec(sql.replace(/ALTER PUBLICATION supabase_realtime ADD TABLE public\.(incident_messages|incident_members);/g, ""));
     }
   }, 30000);
   beforeEach(async () => {
@@ -266,5 +268,56 @@ describe("Incident database authorization", () => {
     const row = await addSystem(); await protectedQuery("SELECT public.remove_incident_member($1,$2)", [incident,responder]);
     await identity(responder); expect((await db.query("SELECT * FROM public.incident_affected_systems")).rows).toHaveLength(0);
     await expect(editSystem(row.id)).rejects.toThrow("Only commanders and responders");
+  });
+  async function sendMessage(body = "Containment started", requestId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa") {
+    const result = await protectedQuery("SELECT * FROM public.send_incident_message($1,$2,$3)", [incident, body, requestId]);
+    return result as { rows: { id: string; body: string; created_at: Date; sender_id: string; author_name: string | null }[] };
+  }
+  it.each([commander, responder])("message writer %s has trusted identity/time and idempotent retries", async (user) => {
+    await identity(user);
+    const before = (await db.query<{ time: Date }>("SELECT clock_timestamp() AS time")).rows[0]?.time;
+    const row = (await sendMessage()).rows[0];
+    expect(row).toMatchObject({ incident_id: incident, sender_id: user, body: "Containment started" });
+    expect(row?.created_at).toBeInstanceOf(Date);
+    expect((row?.created_at as Date).getTime()).toBeGreaterThanOrEqual(before?.getTime() ?? Infinity);
+    expect((await sendMessage()).rows[0]?.id).toBe(row?.id);
+    expect((await db.query("SELECT * FROM public.incident_messages")).rows).toHaveLength(1);
+  });
+  it("viewers read messages but cannot post and nonmembers have neither access", async () => {
+    await sendMessage(); await identity(viewer);
+    expect((await db.query("SELECT body FROM public.incident_messages")).rows).toEqual([{ body: "Containment started" }]);
+    await expect(sendMessage()).rejects.toThrow("Only commanders and responders");
+    await identity(outsider);
+    expect((await db.query("SELECT * FROM public.incident_messages")).rows).toHaveLength(0);
+    await expect(sendMessage()).rejects.toThrow("Only commanders and responders");
+  });
+  it("denies anonymous message access and send without verified identity", async () => {
+    await identity(null, "anon");
+    await expect(protectedQuery("SELECT * FROM public.incident_messages")).rejects.toThrow("permission denied");
+    await expect(sendMessage()).rejects.toThrow("permission denied");
+    await identity(null); await expect(sendMessage()).rejects.toThrow("Authentication required");
+  });
+  it("rejects blank and oversized messages and accepts the 4000-character boundary", async () => {
+    for (const body of ["", " \n\t ", "x".repeat(4001)]) await expect(sendMessage(body)).rejects.toThrow("1 to 4000");
+    expect((await sendMessage("x".repeat(4000))).rows[0]?.body).toHaveLength(4000);
+  });
+  it("ordinary users cannot impersonate senders, edit, delete, move or truncate messages", async () => {
+    await sendMessage();
+    await expect(protectedQuery("INSERT INTO public.incident_messages(incident_id,sender_id,body,request_id) VALUES($1,$2,'Forged',gen_random_uuid())", [incident, outsider])).rejects.toThrow("permission denied");
+    for (const sql of ["UPDATE public.incident_messages SET sender_id=gen_random_uuid()", "UPDATE public.incident_messages SET body='Edited'", "UPDATE public.incident_messages SET incident_id=gen_random_uuid()", "DELETE FROM public.incident_messages", "TRUNCATE public.incident_messages"]) await expect(protectedQuery(sql)).rejects.toThrow("permission denied");
+    await db.exec("RESET ROLE");
+    await expect(protectedQuery("UPDATE public.incident_messages SET body='Edited'")).rejects.toThrow("immutable");
+  });
+  it("removed members cannot read or send even when retrying a previously sent message", async () => {
+    await identity(responder); await sendMessage(); await identity(commander);
+    await protectedQuery("SELECT public.remove_incident_member($1,$2)", [incident, responder]);
+    await identity(responder);
+    expect((await db.query("SELECT * FROM public.incident_messages")).rows).toHaveLength(0);
+    await expect(sendMessage()).rejects.toThrow("Only commanders and responders");
+  });
+  it("uses a verified-session display label without accepting a caller-supplied sender", async () => {
+    await db.query("SELECT set_config('request.jwt.claims',$1,true)", [JSON.stringify({ user_metadata: { display_name: "Test responder" } })]);
+    await identity(responder);
+    expect((await sendMessage()).rows[0]).toMatchObject({ sender_id: responder, author_name: "Test responder" });
   });
 });
