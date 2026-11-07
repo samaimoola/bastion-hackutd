@@ -1,6 +1,7 @@
 # Bastion frontend improvements
 
 ## This increment
+- [ ] Polish the shared presentation and add persistent light/dark appearance controls; verify both themes and mobile layout.
 - [x] Fix demo provider/context mismatch during hot updates; seven tests passed and the affected signed-in preview renders Active response again.
 - [x] Compact, accessible workspace header and responsive tabs.
 - [x] Typed frontend service boundary; retain explicit in-memory demo mode and existing authentication.

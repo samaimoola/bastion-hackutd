@@ -7,6 +7,7 @@ import { CitySkyline } from "@/components/city-skyline";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ThemeToggle } from "@/components/theme-provider";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -49,14 +50,14 @@ function Login() {
     <div className="sky relative min-h-screen overflow-hidden">
       <DemoBanner />
       <CitySkyline variant="hero" className="pointer-events-none absolute inset-x-0 bottom-0 h-[75vh] w-full" />
-      <div className="pointer-events-none absolute left-1/2 top-[18%] h-72 w-72 -translate-x-1/2 rounded-full bg-haze/10 blur-3xl" aria-hidden />
-      <div className="relative grid min-h-[calc(100vh-29px)] items-center gap-12 px-8 py-12 lg:grid-cols-[1.1fr_440px] lg:px-20">
-        <div className="fade-in max-w-xl">
-          <Wordmark />
-          <h1 className="mt-10 text-5xl font-medium leading-[1.05] lg:text-6xl">A calm command center above the storm.</h1>
-          <p className="mt-6 max-w-md text-lg text-muted-foreground">Coordinate containment, tasks, and your team from one steady place while an incident unfolds.</p>
+      <div className="relative mx-auto flex max-w-7xl items-center justify-between px-6 py-6 sm:px-10"><Wordmark /><ThemeToggle compact /></div>
+      <div className="relative mx-auto grid max-w-7xl justify-items-center gap-8 px-6 pb-16 pt-6 sm:px-10 sm:pt-10">
+        <div className="fade-in max-w-xl text-center">
+          <p className="eyebrow">Incident response workspace</p>
+          <h1 className="mt-3 text-5xl font-medium leading-tight sm:text-6xl">Bastion</h1>
+          <p className="mt-4 text-lg text-muted-foreground">A calm command center above the storm.</p>
         </div>
-        <div className="panel fade-in p-8">
+        <div className="panel fade-in w-full max-w-[420px] p-6 sm:p-8">
           <h2 className="text-2xl font-medium">Sign in</h2>
           <p className="mt-2 text-sm text-muted-foreground">Use the account your administrator created for you. There is no public sign-up.</p>
           <form onSubmit={submit} className="mt-6 space-y-4">
