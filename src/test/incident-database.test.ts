@@ -58,7 +58,11 @@ describe("Incident database authorization", () => {
       if (sql.includes("REVOKE ALL ON public.incident_invitations" ) && !sql.includes("CREATE TABLE public.incident_invitations")) await db.exec(sql);
       if (sql.includes("CREATE TABLE public.incident_affected_systems")) await db.exec(sql.replace("ALTER PUBLICATION supabase_realtime ADD TABLE public.incident_affected_systems;", ""));
       if (sql.includes("CREATE TABLE public.incident_messages")) await db.exec(sql.replace(/ALTER PUBLICATION supabase_realtime ADD TABLE public\.(incident_messages|incident_members);/g, ""));
-      if (sql.includes("CREATE TABLE public.incident_activity")) await db.exec(sql.replace("ALTER PUBLICATION supabase_realtime ADD TABLE public.incident_activity;", ""));
+      if (sql.includes("CREATE TABLE public.incident_activity")) {
+        await db.exec(sql.replace("ALTER PUBLICATION supabase_realtime ADD TABLE public.incident_activity;", ""));
+        expect((await db.query("SELECT * FROM public.incident_activity")).rows).toHaveLength(0);
+        expect((await db.query("SELECT began_at FROM public.incident_activity_recording")).rows).toHaveLength(1);
+      }
     }
   }, 30000);
   beforeEach(async () => {
@@ -320,5 +324,88 @@ describe("Incident database authorization", () => {
     await db.query("SELECT set_config('request.jwt.claims',$1,true)", [JSON.stringify({ user_metadata: { display_name: "Test responder" } })]);
     await identity(responder);
     expect((await sendMessage()).rows[0]).toMatchObject({ sender_id: responder, author_name: "Test responder" });
+  });
+  type Event = { actor_id: string; occurred_at: Date; event_type: string; entity_id: string; details: Record<string, unknown> };
+  async function activity(kind?: string) {
+    return (await db.query<Event>("SELECT actor_id,occurred_at,event_type,entity_id,details FROM public.incident_activity WHERE incident_id=$1 AND ($2::text IS NULL OR event_type=$2) ORDER BY occurred_at,id", [incident, kind ?? null])).rows;
+  }
+  it("records creation and initial memberships with trusted actors and timestamps", async () => {
+    const events = await activity();
+    expect(events.map((event) => event.event_type)).toEqual(["incident_created", "member_added", "member_added", "member_added"]);
+    expect(events.every((event) => event.actor_id === commander && event.occurred_at instanceof Date)).toBe(true);
+    expect(events[0]?.details).toEqual({ changes: { title: { after: "Test incident" }, description: { after: "" }, severity: { after: "Medium" }, response_stage: { after: "Detection" } } });
+  });
+  it("records exact before/after incident fields and skips timestamp-only/no-op updates", async () => {
+    await identity(responder); await edit("Changed title");
+    const changes = await activity("incident_updated");
+    expect(changes).toHaveLength(1);
+    expect(changes[0]).toMatchObject({ actor_id: responder, details: { changes: { title: { before: "Test incident", after: "Changed title" }, description: { before: "", after: "Details" }, severity: { before: "Medium", after: "High" }, response_stage: { before: "Detection", after: "Containment" } } } });
+    await edit("Changed title"); expect(await activity("incident_updated")).toHaveLength(1);
+  });
+  it("records affected-system additions and only changed update fields", async () => {
+    const system = await addSystem(); await identity(responder); await editSystem(system.id);
+    const created = await activity("system_created"); const changed = await activity("system_updated");
+    expect(created).toHaveLength(1); expect(changed).toHaveLength(1);
+    expect(created[0]).toMatchObject({ actor_id: commander, entity_id: system.id, details: { changes: { resource_name: { after: "File server" } } } });
+    expect(changed[0]).toMatchObject({ actor_id: responder, details: { changes: { assessment: { before: "suspected", after: "confirmed" }, data_conditions: { before: ["encrypted", "exfiltrated"], after: ["unavailable"] } } } });
+    await editSystem(system.id); expect(await activity("system_updated")).toHaveLength(1);
+  });
+  it("records membership role changes/removal while no-op membership saves create no events", async () => {
+    await setMember(responder, "responder"); expect(await activity("member_role_changed")).toHaveLength(0);
+    await setMember(responder, "viewer");
+    expect((await activity("member_role_changed"))[0]).toMatchObject({ actor_id: commander, entity_id: responder, details: { user_id: responder, previous_role: "responder", role: "viewer" } });
+    await protectedQuery("SELECT public.remove_incident_member($1,$2)", [incident, responder]);
+    expect((await activity("member_removed"))[0]).toMatchObject({ actor_id: commander, entity_id: responder, details: { user_id: responder, previous_role: "viewer", role: null } });
+  });
+  it("records message metadata once without body, credentials or idempotency data", async () => {
+    await sendMessage("Private internal message content"); await sendMessage("Private internal message content");
+    const events = await activity("message_sent");
+    expect(events).toHaveLength(1);
+    expect(Object.keys(events[0]?.details ?? {}).sort()).toEqual(["message_id", "sender_id"]);
+    expect(JSON.stringify(events)).not.toContain("Private internal message content");
+    expect(events[0]).toMatchObject({ actor_id: commander, details: { sender_id: commander } });
+  });
+  it("invitation issuance creates no secret-bearing events; redemption records only real membership addition", async () => {
+    const before = (await activity()).length;
+    await invite("viewer", "c".repeat(64)); expect(await activity()).toHaveLength(before);
+    await identity(outsider); await redeem("c".repeat(64));
+    const events = await activity("member_added");
+    expect(events.at(-1)).toMatchObject({ actor_id: outsider, entity_id: outsider, details: { user_id: outsider, role: "viewer" } });
+    expect(JSON.stringify(events)).not.toContain("c".repeat(64));
+    await identity(commander); await invite("responder", "d".repeat(64));
+    await identity(viewer); const count = (await activity()).length; await redeem("d".repeat(64));
+    expect(await activity()).toHaveLength(count);
+  });
+  it("only current members read timeline and removed members lose existing history", async () => {
+    await identity(viewer); expect((await activity()).length).toBe(4);
+    await identity(outsider); expect(await activity()).toHaveLength(0);
+    await identity(commander); await protectedQuery("SELECT public.remove_incident_member($1,$2)", [incident, viewer]);
+    await identity(viewer); expect(await activity()).toHaveLength(0);
+    await identity(null, "anon"); await expect(protectedQuery("SELECT * FROM public.incident_activity")).rejects.toThrow("permission denied");
+  });
+  it("denies fabricated activity, edits, deletes, moves, truncation and private recorder calls", async () => {
+    await expect(protectedQuery("INSERT INTO public.incident_activity(incident_id,actor_id,event_type,entity_id,details) VALUES($1,$2,'incident_created',$1,'{}')", [incident, outsider])).rejects.toThrow("permission denied");
+    for (const sql of ["UPDATE public.incident_activity SET actor_id=gen_random_uuid()", "UPDATE public.incident_activity SET incident_id=gen_random_uuid()", "DELETE FROM public.incident_activity", "TRUNCATE public.incident_activity"]) await expect(protectedQuery(sql)).rejects.toThrow("permission denied");
+    expect((await db.query("SELECT has_function_privilege('authenticated','private.record_incident_activity()','execute') AS allowed")).rows).toEqual([{ allowed: false }]);
+    await db.exec("RESET ROLE"); await expect(protectedQuery("UPDATE public.incident_activity SET event_type='fake'")).rejects.toThrow("immutable");
+  });
+  it("failed source mutations create no misleading events", async () => {
+    const before = (await activity()).length;
+    await expect(protectedQuery("SELECT public.remove_incident_member($1,$2)", [incident, commander])).rejects.toThrow("last commander");
+    await identity(viewer); await expect(sendMessage()).rejects.toThrow("Only commanders and responders");
+    expect(await activity()).toHaveLength(before);
+  });
+  it("activity insertion failure rolls back its incident, system, member and message changes atomically", async () => {
+    await db.exec(`RESET ROLE; CREATE FUNCTION private.test_activity_failure() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'Test audit storage unavailable'; END; $$; CREATE TRIGGER test_activity_failure BEFORE INSERT ON public.incident_activity FOR EACH ROW EXECUTE FUNCTION private.test_activity_failure();`);
+    await identity(commander);
+    await expect(edit("Must roll back")).rejects.toThrow("Test audit storage unavailable");
+    await expect(addSystem()).rejects.toThrow("Test audit storage unavailable");
+    await expect(setMember(responder, "viewer")).rejects.toThrow("Test audit storage unavailable");
+    await expect(sendMessage()).rejects.toThrow("Test audit storage unavailable");
+    expect((await db.query("SELECT title FROM public.incidents WHERE id=$1", [incident])).rows).toEqual([{ title: "Test incident" }]);
+    expect((await db.query("SELECT role FROM public.incident_members WHERE user_id=$1", [responder])).rows).toEqual([{ role: "responder" }]);
+    expect((await db.query("SELECT * FROM public.incident_messages")).rows).toHaveLength(0);
+    expect((await db.query("SELECT * FROM public.incident_affected_systems")).rows).toHaveLength(0);
+    expect(await activity()).toHaveLength(4);
   });
 });
