@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-provider";
 import { BastionEmblem, CitySkyline } from "@/components/city-skyline";
 import { type Severity, type SystemStatus, type TaskStatus } from "@/lib/demo-store";
 
@@ -44,10 +45,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   };
   return (
     <div className="sky relative min-h-screen">
-      <CitySkyline className="pointer-events-none fixed inset-x-0 bottom-0 h-[45vh] w-full opacity-70" />
+      <CitySkyline className="shell-skyline pointer-events-none fixed inset-x-0 bottom-0 h-[35vh] w-full" />
       <DemoBanner />
       <div className="relative flex min-h-[calc(100vh-29px)] flex-col md:flex-row">
-        <aside className="flex shrink-0 flex-col border-b border-sidebar-border bg-sidebar px-4 py-3 md:sticky md:top-0 md:h-screen md:w-48 md:border-b-0 md:border-r md:py-5">
+        <aside className="flex shrink-0 flex-col border-b border-sidebar-border bg-sidebar px-4 py-3 md:sticky md:top-0 md:h-[calc(100vh-30px)] md:w-56 md:border-b-0 md:border-r md:py-6">
           <Link to="/" className="px-2" aria-label="Bastion home"><Wordmark /></Link>
           <p className="eyebrow mt-5 hidden px-3 md:block">Workspace</p>
           <nav aria-label="Main navigation" className="mt-2 flex gap-1 md:flex-col">
@@ -55,6 +56,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Link to="/team" className={navCls} activeProps={navActive}><Users className="h-4 w-4" aria-hidden /> Team</Link>
           </nav>
           <div className="mt-3 border-t border-sidebar-border pt-3 md:mt-auto">
+            <div className="mb-4"><ThemeToggle /></div>
             <p className="px-2 text-xs text-muted-foreground">Signed in as</p>
             <p className="truncate px-2 font-mono text-xs" title={email ?? ""}>{email ?? "…"}</p>
             <Button size="sm" variant="ghost" className="mt-3 w-full justify-start" disabled={signingOut} onClick={handleSignOut}>
@@ -62,7 +64,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </Button>
           </div>
         </aside>
-        <main className="fade-in mx-auto min-w-0 w-full max-w-6xl px-4 py-4 sm:px-6 md:py-6">{children}</main>
+        <main className="fade-in mx-auto min-w-0 w-full max-w-6xl px-4 py-6 sm:px-6 md:px-8 md:py-9">{children}</main>
       </div>
     </div>
   );
