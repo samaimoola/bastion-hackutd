@@ -31,12 +31,13 @@ describe("Incident list creation entry points", () => {
     const Page = Route.options.component;
     if (!Page) throw new Error("Incident list component missing");
     render(<QueryClientProvider client={client}><Page /></QueryClientProvider>);
-    fireEvent.click(screen.getByRole("button", { name: entry, exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: entry }));
     fireEvent.change(screen.getByLabelText("Title"), { target: { value: "VPN compromise" } });
     fireEvent.change(screen.getByLabelText("Description"), { target: { value: "Confirmed login anomaly" } });
-    fireEvent.click(screen.getByRole("button", { name: "Create incident", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: "Create incident" }));
     await waitFor(() => expect(navigate).toHaveBeenCalledWith({ to: "/incidents/$id", params: { id: record.id } }));
-    expect(create).toHaveBeenCalledExactlyOnceWith({ data: { title: "VPN compromise", description: "Confirmed login anomaly", severity: "Medium", stage: "Detection" } });
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(create.mock.calls[0]?.[0]).toEqual({ data: { title: "VPN compromise", description: "Confirmed login anomaly", severity: "Medium", stage: "Detection" } });
     expect(client.getQueryData(incidentKeys.detail("user-a", record.id))).toEqual(record);
     expect(list).toHaveBeenCalled();
   });
