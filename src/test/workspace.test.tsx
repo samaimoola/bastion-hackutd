@@ -1,13 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { act, fireEvent, render, renderHook, screen, waitFor, cleanup } from "@testing-library/react";
 import { WorkspaceTimeline } from "@/components/workspace-timeline";
+import { useState } from "react";
 import { DemoProvider, useDemo } from "@/lib/demo-store";
 import { workspaceStats, responseBrief } from "@/lib/workspace-api";
 import { eventInput, timelineInputSchema } from "@/lib/workspace-models";
 
 describe("Workspace records", () => {
   it("records a submitted update through the timeline form", async () => {
-    render(<DemoProvider><WorkspaceTimeline open={true} setOpen={() => {}} /></DemoProvider>);
+    function TimelineHarness() {
+      const [open, setOpen] = useState(true);
+      return <DemoProvider><WorkspaceTimeline open={open} setOpen={setOpen} /></DemoProvider>;
+    }
+    render(<TimelineHarness />);
     fireEvent.change(screen.getByLabelText("Update"), { target: { value: "Confirmed backup mount completed" } });
     fireEvent.change(screen.getByLabelText("Event time (UTC)"), { target: { value: "2026-11-07T06:00" } });
     fireEvent.click(screen.getByRole("button", { name: "Record update" }));
