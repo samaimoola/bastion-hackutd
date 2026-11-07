@@ -1,5 +1,6 @@
 // SYNTHETIC DEMO DATA — temporary in-memory state only. Replaced by the authenticated backend next.
 import { createContext, useContext, useState, type ReactNode } from "react";
+import { timelineInputSchema, type TimelineInput, type TimelineEntry } from "@/lib/workspace-models";
 
 export type Severity = "Critical" | "High" | "Medium" | "Low";
 export type Stage = "Detection" | "Containment" | "Eradication" | "Recovery" | "Post-incident";
@@ -10,7 +11,7 @@ export type Role = "Incident Commander" | "Responder" | "Communications" | "Lega
 export interface Member { id: string; name: string; email: string; role: Role; active: boolean }
 export interface System { id: string; name: string; type: string; owner: string; status: SystemStatus; note: string }
 export interface Task { id: string; title: string; assigneeId: string; status: TaskStatus; due: string }
-export interface TimelineEvent { id: string; at: string; author: string; text: string }
+export type TimelineEvent = TimelineEntry;
 export interface ChatMessage { id: string; at: string; authorId: string; text: string }
 export interface Incident {
   id: string; title: string; severity: Severity; stage: Stage; commanderId: string;
@@ -63,13 +64,13 @@ const tasks: Task[] = [
   { id: "t5", title: "Assess regulatory notification obligations", assigneeId: "m5", status: "Blocked", due: "2026-11-08T12:00:00Z" },
 ];
 
-const timeline: TimelineEvent[] = [
+const timeline: TimelineEvent[] = ([
   { id: "e1", at: "2026-11-07T06:31:00Z", author: "Endpoint alerting", text: "Mass file rename activity detected on FIN-FS-01." },
   { id: "e2", at: "2026-11-07T06:42:00Z", author: "Dana Okafor", text: "Incident declared. Severity set to Critical." },
   { id: "e3", at: "2026-11-07T07:10:00Z", author: "Marcus Lee", text: "FIN-FS-01, FIN-FS-02 and WS-FIN-114 isolated from network." },
   { id: "e4", at: "2026-11-07T11:48:00Z", author: "Priya Raman", text: "VPN logs show login for j.doe from unfamiliar IP range at 02:14 UTC." },
   { id: "e5", at: "2026-11-07T18:55:00Z", author: "Dana Okafor", text: "Stage moved to Containment. Backup validation underway." },
-];
+].map((entry) => ({ ...entry, recordedAt: entry.at, type: entry.id === "e2" || entry.id === "e5" ? "Status change" : entry.id === "e3" ? "Action" : "Finding" })) as TimelineEvent[]);
 
 const chat: ChatMessage[] = [
   { id: "c1", at: "2026-11-07T18:40:00Z", authorId: "m3", text: "Snapshot from Nov 6 23:00 mounts cleanly so far. Checksums running." },
@@ -90,6 +91,7 @@ interface Store {
   setTaskStatus: (id: string, s: TaskStatus) => void;
   timeline: TimelineEvent[];
   addEvent: (text: string) => void;
+  recordEvent: (input: TimelineInput, author: string) => TimelineEvent;
   chat: ChatMessage[];
   sendChat: (text: string) => void;
   memberName: (id: string) => string;
@@ -107,7 +109,8 @@ export function DemoProvider({ children }: { children: ReactNode }) {
 
   const author = "Signed-in user (demo log)";
   const log = (text: string) => {
-    setTl((t) => [...t, { id: uid(), at: now(), author, text }]);
+    const recordedAt = now();
+    setTl((t) => [...t, { id: uid(), at: recordedAt, recordedAt, author, text, type: "Status change" }]);
     setInc((i) => ({ ...i, lastUpdate: now() }));
   };
   const memberName = (id: string) => mem.find((m) => m.id === id)?.name ?? "Unassigned";
@@ -135,6 +138,13 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     },
     timeline: tl,
     addEvent: log,
+    recordEvent: (input, eventAuthor) => {
+      const validated = timelineInputSchema.parse(input);
+      const entry: TimelineEvent = { ...validated, id: uid(), recordedAt: now(), author: eventAuthor };
+      setTl((entries) => [...entries, entry]);
+      setInc((current) => ({ ...current, lastUpdate: entry.recordedAt }));
+      return entry;
+    },
     chat: msgs,
     sendChat: (text) => setMsgs((m) => [...m, { id: uid(), at: now(), authorId: "m1", text }]),
     memberName,
