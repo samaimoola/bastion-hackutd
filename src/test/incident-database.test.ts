@@ -58,6 +58,7 @@ describe("Incident database authorization", () => {
       if (sql.includes("REVOKE ALL ON public.incident_invitations" ) && !sql.includes("CREATE TABLE public.incident_invitations")) await db.exec(sql);
       if (sql.includes("CREATE TABLE public.incident_affected_systems")) await db.exec(sql.replace("ALTER PUBLICATION supabase_realtime ADD TABLE public.incident_affected_systems;", ""));
       if (sql.includes("CREATE TABLE public.incident_messages")) await db.exec(sql.replace(/ALTER PUBLICATION supabase_realtime ADD TABLE public\.(incident_messages|incident_members);/g, ""));
+      if (sql.includes("CREATE TABLE public.incident_activity")) await db.exec(sql.replace("ALTER PUBLICATION supabase_realtime ADD TABLE public.incident_activity;", ""));
     }
   }, 30000);
   beforeEach(async () => {
