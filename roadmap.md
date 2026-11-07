@@ -1,6 +1,7 @@
 # Bastion frontend improvements
 
 ## This increment
+- [x] Make the real-list New Incident header action prominent at laptop and smaller widths, add the first-incident entry point, and reuse the existing creation dialog and backend function.
 - [x] Connect real incident list, creation, ID loading and refresh through existing functions; separate demo content, disable unconnected actions, isolate account caches, and run focused checks.
 - [ ] Verify signed-in real incident creation → workspace → reload → list, inaccessible IDs and account switching in the browser; blocked by external unmanaged Supabase session (tools cannot supply a signed-in session).
 - [x] Apply incident database foundation with member-only access, atomic creation, commander-managed membership, and last-commander protection; regenerate types and test permissions. Application screens, authentication, Guide, and demo state unchanged. Two-session concurrency testing remains unavailable because the sandbox PostgreSQL installation cannot initialize; shared parent-row serialization was reviewed.
