@@ -270,7 +270,8 @@ describe("Incident database authorization", () => {
     await expect(editSystem(row.id)).rejects.toThrow("Only commanders and responders");
   });
   async function sendMessage(body = "Containment started", requestId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa") {
-    return protectedQuery("SELECT * FROM public.send_incident_message($1,$2,$3)", [incident, body, requestId]);
+    const result = await protectedQuery("SELECT * FROM public.send_incident_message($1,$2,$3)", [incident, body, requestId]);
+    return result as { rows: { id: string; body: string; created_at: Date; sender_id: string; author_name: string | null }[] };
   }
   it.each([commander, responder])("message writer %s has trusted identity/time and idempotent retries", async (user) => {
     await identity(user);

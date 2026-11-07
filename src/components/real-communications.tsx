@@ -16,7 +16,7 @@ export function RealCommunications({ incidentId, userId }: { incidentId: string;
   const client = useQueryClient();
   // DELETE events are not reliably delivered to a removed member under RLS.
   // Recheck access as well as listening for membership events; fail closed on errors.
-  const membership = useQuery({ ...incidentMembershipOptions(userId, incidentId), refetchInterval: 5000 });
+  const membership = useQuery({ ...incidentMembershipOptions(userId, incidentId), refetchInterval: 5000, refetchIntervalInBackground: true });
   const role = membership.isError ? null : membership.data;
   const member = Boolean(role);
   const messages = useInfiniteQuery({ ...messagesOptions(userId, incidentId), enabled: member });
@@ -60,7 +60,7 @@ export function RealCommunications({ incidentId, userId }: { incidentId: string;
   const rows = [...new Map(messages.data?.pages.flat().map((row) => [row.id, row])).values()].sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id));
   if (membership.isPending) return <section className="py-6"><p role="status">Checking message access…</p></section>;
   if (!member) return <section className="py-6"><p role="alert">Messages are unavailable or you no longer have incident access.</p><Button variant="outline" className="mt-4" onClick={() => { void membership.refetch(); }}>Check access again</Button></section>;
-  const allowed = canEditIncident(role);
+  const allowed = !membership.isFetching && canEditIncident(role);
   return <section className="mx-auto max-w-4xl py-6">
     <header className="mb-6 flex flex-wrap items-start justify-between gap-4"><div><h2 className="text-xl font-medium">Communications</h2><p className="mt-2 text-sm text-muted-foreground">{live}</p></div><Button variant="outline" disabled={messages.isFetching} onClick={() => { void membership.refetch(); void messages.refetch(); }}><RefreshCw className="size-4" />Refresh</Button></header>
     {messages.isPending ? <p role="status">Loading messages…</p> : messages.isError ? <p role="alert" className="text-destructive">{messages.error.message}</p> : rows.length === 0 ? <div className="border-y border-border py-10"><h3 className="text-lg font-medium">No messages yet</h3><p className="mt-3 text-sm text-muted-foreground">{allowed ? "Share an update with the incident team." : "Messages from the incident team will appear here."}</p></div> : <>
