@@ -52,7 +52,7 @@ export function BastionGuide({
         prepareSendMessagesRequest: ({ messages, headers }) => ({
           ...(headers ? { headers } : {}),
           body: {
-            messages: messages.map((m) => ({
+            messages: messages.slice(-1).map((m) => ({
               id: m.id,
               role: m.role,
               parts: m.parts.filter((p) => p.type === "text"),
