@@ -1,6 +1,7 @@
 # Bastion frontend improvements
 
 ## This increment
+- [ ] Apply incident database foundation with member-only access, atomic creation, commander-managed membership, and last-commander protection; regenerate types and test permissions. Keep application screens, authentication, Guide, and demo state unchanged.
 - [x] Fix Guide validation so short greetings remain valid after empty or oversized assistant turns; only the new question is submitted and validated against the 12,000-character limit.
 - [x] Add automatic page/tab navigation for explicit guide requests; destination tests pass and preview build is clean. Signed-in end-to-end navigation remains unverified because the external Supabase browser session is unavailable.
 - [x] Add a Bastion AI usage guide with one account-saved conversation, protected streaming, and theme-aware AI Elements presentation; eleven tests pass and preview build is clean.
