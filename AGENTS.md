@@ -37,5 +37,6 @@ use the editor.
 - All demo data and mutations live in src/lib/demo-store.tsx (React context, in-memory) so the upcoming backend can replace one module.
 - App screens live under src/routes/_authenticated/ (client-only Supabase session gate redirecting to /login); demo role labels are display-only, never authorization.
 - Workspace screens consume the typed adapter in src/lib/workspace-api.ts; demo mutations remain in demo-store, so a live implementation can replace the boundary without silent fallback.
+- Real incident list and detail routes load existing incident server functions into identity-keyed Query caches; explicit demo IDs render isolated demo screens, and unconnected real sections never consume demo data.
 - Timeline validation and event types live in workspace-models; event time and recorded time are distinct UTC instants so delayed reporting preserves chronology.
 - DemoContext lives in a stable module and retains its identity through Vite hot updates so existing providers and refreshed consumers share the same context.

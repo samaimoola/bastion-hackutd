@@ -14,7 +14,7 @@ export function DemoBanner() {
   return (
     <div className="relative z-10 flex items-center justify-center gap-2 border-b border-warning/25 bg-background/90 px-4 py-1.5 text-xs text-warning">
       <FlaskConical className="h-3.5 w-3.5" aria-hidden />
-      <span><strong>Demo data:</strong> incident records are synthetic and stored only in this browser tab. Sign-in is real; incident data is not yet connected. Role labels are illustrative, not permissions.</span>
+      <span><strong>Demo data:</strong> records on this screen are synthetic and stored only in this browser tab. Role labels are illustrative, not permissions.</span>
     </div>
   );
 }
@@ -31,7 +31,7 @@ export function Wordmark() {
 const navCls = "flex items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-foreground";
 const navActive = { className: "!border-primary/30 !bg-sidebar-accent !text-sidebar-accent-foreground shadow-[inset_3px_0_0_var(--primary)]" };
 
-export function AppShell({ children }: { children: ReactNode }) {
+export function AppShell({ children, mode = "demo" }: { children: ReactNode; mode?: "demo" | "live" }) {
   const navigate = useNavigate();
   const [email, setEmail] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState(false);
@@ -46,7 +46,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="sky relative min-h-screen">
       <CitySkyline className="shell-skyline pointer-events-none fixed inset-x-0 bottom-0 h-[35vh] w-full" />
-      <DemoBanner />
+      {mode === "demo" ? <DemoBanner /> : <div className="relative z-10 border-b border-border bg-background/90 px-4 py-1.5 text-center text-xs text-muted-foreground">Real incident records · Supabase · other workspace sections not connected yet</div>}
       <div className="relative flex min-h-[calc(100vh-29px)] flex-col md:flex-row">
         <aside className="flex shrink-0 flex-col border-b border-sidebar-border bg-sidebar px-4 py-3 md:sticky md:top-0 md:h-[calc(100vh-30px)] md:w-56 md:border-b-0 md:border-r md:py-6">
           <Link to="/" className="px-2" aria-label="Bastion home"><Wordmark /></Link>
