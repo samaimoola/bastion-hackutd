@@ -21,7 +21,7 @@ export function BastionGuide({ initialMessages, blockedReason }: { initialMessag
       const { data } = await supabase.auth.getSession();
       return data.session ? { Authorization: `Bearer ${data.session.access_token}` } : {};
     },
-    prepareSendMessagesRequest: ({ messages, headers }) => ({ headers, body: { messages: messages.map((m) => ({ id: m.id, role: m.role, parts: m.parts.filter((p) => p.type === "text") })) } }),
+    prepareSendMessagesRequest: ({ messages, headers }) => ({ ...(headers ? { headers } : {}), body: { messages: messages.map((m) => ({ id: m.id, role: m.role, parts: m.parts.filter((p) => p.type === "text") })) } }),
     fetch: async (url, init) => {
       const response = await fetch(url, init);
       if (!response.ok) {

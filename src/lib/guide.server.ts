@@ -42,7 +42,17 @@ export async function handleGuide(request: Request) {
   try {
     const validated = await validateUIMessages({ messages });
     await save(validated);
-    const { result } = createResponsesCall(request, { baseURL: "https://ai.gateway.lovable.dev/v1", apiKey: aiKey, model: "openai/gpt-6-astra" }, await convertToModelMessages(validated), instructions);
+    let upstreamError: { status: number; message: string } | null = null;
+    const { result, wrap } = createResponsesCall(request, {
+      baseURL: "https://ai.gateway.lovable.dev/v1", apiKey: aiKey, model: "openai/gpt-6-astra",
+      onUpstreamError: async (status, message) => {
+        upstreamError = { status, message };
+        if (status === 402 || status === 403) {
+          const { error } = await db.from("guide_conversations").update({ blocked_reason: message, blocked_status: status }).eq("user_id", userId);
+          if (error) throw new Error("The guide is unavailable and its paused state could not be saved.");
+        }
+      },
+    }, await convertToModelMessages(validated), instructions);
     // Start consuming now; SDK errors must remain visible, not become invented replies.
     const response = result.toUIMessageStreamResponse({
       originalMessages: validated,
@@ -50,7 +60,13 @@ export async function handleGuide(request: Request) {
       onFinish: async ({ messages: completed }) => { await save(completed); },
       onError: (error) => error instanceof Error ? error.message : "The guide could not respond. Please try again.",
     });
-    return response;
+    const wrapped = await wrap(response);
+    const failure = upstreamError as { status: number; message: string } | null;
+    if (failure) {
+      await wrapped.body?.cancel();
+      return Response.json({ message: failure.message }, { status: failure.status });
+    }
+    return wrapped;
   } catch (error) {
     if (request.signal.aborted) return new Response(null, { status: 499 });
     return Response.json({ message: error instanceof Error ? error.message : "The guide is unavailable." }, { status: 500 });
