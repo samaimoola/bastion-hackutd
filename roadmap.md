@@ -1,7 +1,8 @@
 # Bastion frontend improvements
 
 ## This increment
-- [ ] Add persistent member-scoped incident communications with protected posting, trusted authors/times, live updates and account/membership cleanup; run focused checks.
+- [x] Add persistent member-scoped incident communications with protected posting, trusted authors/times, live updates and account/membership cleanup; all 223 tests pass, generated types and preview build verified, signed-out route redirects to login.
+- [ ] Verify signed-in communications sending/reload, two-session live delivery, viewer/nonmember behavior, removal/account-switch cleanup and concurrent send/revocation; blocked by external unmanaged Supabase browser sessions. Database permissions and deterministic revocation are tested in isolated PostgreSQL; protected-send scanner warning is intentional and reviewed, pre-existing security/password warnings remain.
 - [x] Fix invitation address selection to use the public runtime origin or confirmed canonical published address from preview; preserve fragment credentials and existing invitation protections, with focused URL regression checks.
 - [x] Add persistent real affected systems with assessment, multiple data conditions, containment, notes and trusted actors/times; member-scoped reads, protected writes and Realtime updates.
 - [ ] Verify signed-in affected-system create/edit → reload and two-session Realtime delivery/isolation, including revoked membership; blocked by unavailable external Supabase browser sessions. Concurrent write/revocation locking remains unverified.
@@ -33,5 +34,4 @@
 ## Subsequent increments (deliberately deferred per brief)
 - Independent impact/containment and exfiltration fields, searchable assets, add/edit forms.
 - Task priority, owner and due-date editing, overdue highlighting.
-- Communications sending/failure/retry flow with retained drafts.
 - Live adapter and permission integration: partner's API contract required; never fall back to demo after errors.
