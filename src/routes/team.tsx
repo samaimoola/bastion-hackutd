@@ -34,7 +34,10 @@ function Team() {
 
   const add = (e: React.FormEvent) => {
     e.preventDefault();
-    if (members.some((m) => m.email.toLowerCase() === email.toLowerCase())) return toast.error("That email is already on the team.");
+    if (members.some((m) => m.email.toLowerCase() === email.toLowerCase())) {
+      toast.error("That email is already on the team.");
+      return;
+    }
     setMembers((m) => [...m, { id: Math.random().toString(36).slice(2), name, email, role, active: true }]);
     toast.success(`${name} added (demo only)`);
     setName(""); setEmail("");
