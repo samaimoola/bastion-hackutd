@@ -12,7 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedGuideRouteImport } from './routes/_authenticated/guide'
 import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
+import { Route as ApiGuideRouteImport } from './routes/api/guide'
 import { Route as AuthenticatedIncidentsIdRouteImport } from './routes/_authenticated/incidents.$id'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -29,10 +31,20 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedGuideRoute = AuthenticatedGuideRouteImport.update({
+  id: '/guide',
+  path: '/guide',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedTeamRoute = AuthenticatedTeamRouteImport.update({
   id: '/team',
   path: '/team',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ApiGuideRoute = ApiGuideRouteImport.update({
+  id: '/api/guide',
+  path: '/api/guide',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedIncidentsIdRoute =
   AuthenticatedIncidentsIdRouteImport.update({
@@ -44,12 +56,16 @@ const AuthenticatedIncidentsIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
+  '/guide': typeof AuthenticatedGuideRoute
   '/team': typeof AuthenticatedTeamRoute
+  '/api/guide': typeof ApiGuideRoute
   '/incidents/$id': typeof AuthenticatedIncidentsIdRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
+  '/guide': typeof AuthenticatedGuideRoute
   '/team': typeof AuthenticatedTeamRoute
+  '/api/guide': typeof ApiGuideRoute
   '/': typeof AuthenticatedIndexRoute
   '/incidents/$id': typeof AuthenticatedIncidentsIdRoute
 }
@@ -57,20 +73,25 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/login': typeof LoginRoute
+  '/_authenticated/guide': typeof AuthenticatedGuideRoute
   '/_authenticated/team': typeof AuthenticatedTeamRoute
+  '/api/guide': typeof ApiGuideRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/incidents/$id': typeof AuthenticatedIncidentsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/team' | '/incidents/$id'
+  fullPaths:
+    '/' | '/login' | '/guide' | '/team' | '/api/guide' | '/incidents/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/team' | '/' | '/incidents/$id'
+  to: '/login' | '/guide' | '/team' | '/api/guide' | '/' | '/incidents/$id'
   id:
     | '__root__'
     | '/_authenticated'
     | '/login'
+    | '/_authenticated/guide'
     | '/_authenticated/team'
+    | '/api/guide'
     | '/_authenticated/'
     | '/_authenticated/incidents/$id'
   fileRoutesById: FileRoutesById
@@ -78,6 +99,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   LoginRoute: typeof LoginRoute
+  ApiGuideRoute: typeof ApiGuideRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -103,12 +125,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/guide': {
+      id: '/_authenticated/guide'
+      path: '/guide'
+      fullPath: '/guide'
+      preLoaderRoute: typeof AuthenticatedGuideRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/team': {
       id: '/_authenticated/team'
       path: '/team'
       fullPath: '/team'
       preLoaderRoute: typeof AuthenticatedTeamRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/guide': {
+      id: '/api/guide'
+      path: '/api/guide'
+      fullPath: '/api/guide'
+      preLoaderRoute: typeof ApiGuideRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/incidents/$id': {
       id: '/_authenticated/incidents/$id'
@@ -121,12 +157,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedGuideRoute: typeof AuthenticatedGuideRoute
   AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedIncidentsIdRoute: typeof AuthenticatedIncidentsIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedGuideRoute: AuthenticatedGuideRoute,
   AuthenticatedTeamRoute: AuthenticatedTeamRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedIncidentsIdRoute: AuthenticatedIncidentsIdRoute,
@@ -138,6 +176,7 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   LoginRoute: LoginRoute,
+  ApiGuideRoute: ApiGuideRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

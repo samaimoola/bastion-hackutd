@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
-import { FlaskConical, Siren, Users, LogOut } from "lucide-react";
+import { FlaskConical, Siren, Users, LogOut, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
@@ -54,6 +54,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <nav aria-label="Main navigation" className="mt-2 flex gap-1 md:flex-col">
             <Link to="/" className={navCls} activeProps={navActive} activeOptions={{ exact: true }}><Siren className="h-4 w-4" aria-hidden /> Incidents</Link>
             <Link to="/team" className={navCls} activeProps={navActive}><Users className="h-4 w-4" aria-hidden /> Team</Link>
+            <Link to="/guide" className={navCls} activeProps={navActive}><BookOpen className="h-4 w-4" aria-hidden /> AI Guide</Link>
           </nav>
           <div className="mt-3 border-t border-sidebar-border pt-3 md:mt-auto">
             <div className="mb-4"><ThemeToggle /></div>
