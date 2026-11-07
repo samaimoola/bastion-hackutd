@@ -7,7 +7,7 @@ export const listIncidentMessages = createServerFn({ method: "GET" }).middleware
     const { data: incident, error: accessError } = await context.supabase.from("incidents").select("id").eq("id", data.incidentId).maybeSingle();
     if (accessError || !incident) throw new Error("This incident is unavailable or you no longer have access.");
     let query = context.supabase.from("incident_messages").select("id,incident_id,sender_id,author_name,body,request_id,created_at").eq("incident_id", data.incidentId).order("created_at", { ascending: false }).order("id", { ascending: false }).limit(100);
-    if (data.before) query = query.lt("created_at", data.before);
+    if (data.before) query = query.or(`created_at.lt.${data.before.time},and(created_at.eq.${data.before.time},id.lt.${data.before.id})`);
     const { data: rows, error } = await query;
     if (error) throw new Error("Messages could not be loaded. Please try again.");
     return rows ?? [];
