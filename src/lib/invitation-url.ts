@@ -7,7 +7,7 @@ export function isNonPublicInvitationHost(hostname: string): boolean {
   if (["lovableproject.com", "lovableproject-dev.com", "lovable.dev", "gptengineer.app"].some(inZone)) return true;
   if (host === "localhost" || host.endsWith(".localhost") || host === "[::1]" || /^127\./.test(host)) return true;
   if (!["lovable.app", "gpt-eng.com", "gptengineer.run"].some(inZone)) return false;
-  const first = host.split(".")[0];
+  const first = host.split(".")[0] ?? "";
   return /^(?:id-preview|preview)(?:-[a-z0-9]+)?--.+$/.test(first)
     || /^project--[0-9a-f-]{36}-dev$/.test(first)
     || /^live--[0-9a-f-]{36}(?:-thr_[a-z0-9]+)?$/.test(first);
