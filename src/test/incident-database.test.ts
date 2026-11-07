@@ -54,6 +54,7 @@ describe("Incident database authorization", () => {
       const sql = readFileSync(`${folder}${name}`, "utf8");
       if (sql.includes("REVOKE ALL ON public.incidents, public.incident_members")) await db.exec(sql);
       if (sql.includes("CREATE TABLE public.incident_invitations")) await db.exec(sql);
+      if (sql.includes("REVOKE ALL ON public.incident_invitations" ) && !sql.includes("CREATE TABLE public.incident_invitations")) await db.exec(sql);
     }
   }, 30000);
   beforeEach(async () => {
@@ -211,6 +212,7 @@ describe("Incident database authorization", () => {
     await expect(protectedQuery("SELECT token_hash FROM public.incident_invitations")).rejects.toThrow("permission denied");
     expect((await db.query("SELECT role FROM public.incident_invitations")).rows).toEqual([{ role: "responder" }]);
     await expect(protectedQuery("UPDATE public.incident_invitations SET role='viewer'")).rejects.toThrow("permission denied");
+    await expect(protectedQuery("TRUNCATE public.incident_invitations")).rejects.toThrow("permission denied");
     await identity(viewer);
     expect((await db.query("SELECT role FROM public.incident_invitations")).rows).toHaveLength(0);
   });
