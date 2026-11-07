@@ -2,6 +2,7 @@ import { Link, useRouter, type ErrorComponentProps } from "@tanstack/react-route
 import { AppShell } from "./app-shell";
 import { Button } from "./ui/button";
 import { NOT_FOUND_MESSAGE } from "@/lib/incident-models";
+import { useQueryErrorResetBoundary } from "@tanstack/react-query";
 
 export function IncidentLoading() {
   return <AppShell mode="live"><p role="status" className="py-12 text-muted-foreground">Loading incidents…</p></AppShell>;
@@ -13,6 +14,7 @@ export function IncidentNotFound() {
 
 export function IncidentError({ error, reset }: ErrorComponentProps) {
   const router = useRouter();
+  const queryReset = useQueryErrorResetBoundary();
   if (error instanceof Error && error.message === NOT_FOUND_MESSAGE) return <IncidentNotFound />;
-  return <AppShell mode="live"><h1 className="text-2xl">Incidents could not be loaded</h1><p role="alert" className="mt-3 text-sm text-muted-foreground">Please try again. If your session has expired, sign in again.</p><Button className="mt-6" onClick={() => { void router.invalidate(); reset(); }}>Try again</Button></AppShell>;
+  return <AppShell mode="live"><h1 className="text-2xl">Incidents could not be loaded</h1><p role="alert" className="mt-3 text-sm text-muted-foreground">Please try again. If your session has expired, sign in again.</p><Button className="mt-6" onClick={() => { queryReset.reset(); void router.invalidate(); reset(); }}>Try again</Button></AppShell>;
 }
