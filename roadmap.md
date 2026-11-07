@@ -1,6 +1,8 @@
 # Bastion frontend improvements
 
 ## This increment
+- [ ] Add incident-specific team management and secure single-use invitations; invitation migration awaits approval after the earlier request was interrupted.
+- [ ] Simplify workspace wording and improve the Guide/workspace layout for less technical users, with balanced spacing rather than left-clumped content.
 - [x] Connect real incident editing to the existing update RPC, read verified caller membership, refresh identity-scoped caches, and test editing permissions and submissions.
 - [ ] Verify signed-in editing and reload in the browser as commander, responder and viewer; blocked by external unmanaged Supabase session.
 - [x] Make the real-list New Incident header action prominent at laptop and smaller widths, add the first-incident entry point, and reuse the existing creation dialog and backend function.
