@@ -9,14 +9,14 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as TeamRouteImport } from './routes/team'
-import { Route as IncidentsIdRouteImport } from './routes/incidents.$id'
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
+import { Route as AuthenticatedIncidentsIdRouteImport } from './routes/_authenticated/incidents.$id'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -24,58 +24,69 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TeamRoute = TeamRouteImport.update({
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTeamRoute = AuthenticatedTeamRouteImport.update({
   id: '/team',
   path: '/team',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const IncidentsIdRoute = IncidentsIdRouteImport.update({
-  id: '/incidents/$id',
-  path: '/incidents/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const AuthenticatedIncidentsIdRoute =
+  AuthenticatedIncidentsIdRouteImport.update({
+    id: '/incidents/$id',
+    path: '/incidents/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
-  '/team': typeof TeamRoute
-  '/incidents/$id': typeof IncidentsIdRoute
+  '/team': typeof AuthenticatedTeamRoute
+  '/incidents/$id': typeof AuthenticatedIncidentsIdRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/team': typeof TeamRoute
-  '/incidents/$id': typeof IncidentsIdRoute
+  '/team': typeof AuthenticatedTeamRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/incidents/$id': typeof AuthenticatedIncidentsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/login': typeof LoginRoute
-  '/team': typeof TeamRoute
-  '/incidents/$id': typeof IncidentsIdRoute
+  '/_authenticated/team': typeof AuthenticatedTeamRoute
+  '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/incidents/$id': typeof AuthenticatedIncidentsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths: '/' | '/login' | '/team' | '/incidents/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/team' | '/incidents/$id'
-  id: '__root__' | '/' | '/login' | '/team' | '/incidents/$id'
+  to: '/login' | '/team' | '/' | '/incidents/$id'
+  id:
+    | '__root__'
+    | '/_authenticated'
+    | '/login'
+    | '/_authenticated/team'
+    | '/_authenticated/'
+    | '/_authenticated/incidents/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   LoginRoute: typeof LoginRoute
-  TeamRoute: typeof TeamRoute
-  IncidentsIdRoute: typeof IncidentsIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -85,28 +96,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/team': {
-      id: '/team'
+    '/_authenticated/': {
+      id: '/_authenticated/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/team': {
+      id: '/_authenticated/team'
       path: '/team'
       fullPath: '/team'
-      preLoaderRoute: typeof TeamRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedTeamRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/incidents/$id': {
-      id: '/incidents/$id'
+    '/_authenticated/incidents/$id': {
+      id: '/_authenticated/incidents/$id'
       path: '/incidents/$id'
       fullPath: '/incidents/$id'
-      preLoaderRoute: typeof IncidentsIdRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedIncidentsIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedIncidentsIdRoute: typeof AuthenticatedIncidentsIdRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedTeamRoute: AuthenticatedTeamRoute,
+  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedIncidentsIdRoute: AuthenticatedIncidentsIdRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   LoginRoute: LoginRoute,
-  TeamRoute: TeamRoute,
-  IncidentsIdRoute: IncidentsIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

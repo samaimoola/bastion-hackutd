@@ -78,9 +78,6 @@ const chat: ChatMessage[] = [
 ];
 
 interface Store {
-  user: Member | null;
-  signIn: (email: string) => boolean;
-  signOut: () => void;
   incident: Incident;
   updateIncident: (p: Partial<Incident>) => void;
   members: Member[];
@@ -101,7 +98,6 @@ interface Store {
 const Ctx = createContext<Store | null>(null);
 
 export function DemoProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<Member | null>(null);
   const [inc, setInc] = useState(incident);
   const [mem, setMem] = useState(members);
   const [sys, setSys] = useState(systems);
@@ -109,7 +105,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   const [tl, setTl] = useState(timeline);
   const [msgs, setMsgs] = useState(chat);
 
-  const author = user?.name ?? "Demo user";
+  const author = "Signed-in user (demo log)";
   const log = (text: string) => {
     setTl((t) => [...t, { id: uid(), at: now(), author, text }]);
     setInc((i) => ({ ...i, lastUpdate: now() }));
@@ -117,13 +113,6 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   const memberName = (id: string) => mem.find((m) => m.id === id)?.name ?? "Unassigned";
 
   const value: Store = {
-    user,
-    signIn: (email) => {
-      const m = mem.find((x) => x.email.toLowerCase() === email.trim().toLowerCase() && x.active);
-      setUser(m ?? null);
-      return !!m;
-    },
-    signOut: () => setUser(null),
     incident: inc,
     updateIncident: (p) => {
       setInc((i) => ({ ...i, ...p, lastUpdate: now() }));
@@ -147,7 +136,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     timeline: tl,
     addEvent: log,
     chat: msgs,
-    sendChat: (text) => setMsgs((m) => [...m, { id: uid(), at: now(), authorId: user?.id ?? "m1", text }]),
+    sendChat: (text) => setMsgs((m) => [...m, { id: uid(), at: now(), authorId: "m1", text }]),
     memberName,
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

@@ -1,16 +1,19 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { FlaskConical, Siren, Users, LogOut, LogIn } from "lucide-react";
+import { useEffect, useState } from "react";
+import { FlaskConical, Siren, Users, LogOut } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BastionEmblem, CitySkyline } from "@/components/city-skyline";
-import { useDemo, type Severity, type SystemStatus, type TaskStatus } from "@/lib/demo-store";
+import { type Severity, type SystemStatus, type TaskStatus } from "@/lib/demo-store";
 
 export function DemoBanner() {
   return (
     <div className="relative z-10 flex items-center justify-center gap-2 border-b border-warning/25 bg-background/90 px-4 py-1.5 text-xs text-warning">
       <FlaskConical className="h-3.5 w-3.5" aria-hidden />
-      <span><strong>Demo mode:</strong> synthetic data, stored only in this browser tab. Changes reset on reload. Not connected to a backend.</span>
+      <span><strong>Demo data:</strong> incident records are synthetic and stored only in this browser tab. Sign-in is real; incident data is not yet connected. Role labels are illustrative, not permissions.</span>
     </div>
   );
 }
@@ -28,8 +31,17 @@ const navCls = "flex items-center gap-3 rounded-lg border border-transparent px-
 const navActive = { className: "!border-primary/30 !bg-sidebar-accent !text-sidebar-accent-foreground shadow-[inset_3px_0_0_var(--primary)]" };
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { user, signOut } = useDemo();
   const navigate = useNavigate();
+  const [email, setEmail] = useState<string | null>(null);
+  const [signingOut, setSigningOut] = useState(false);
+  useEffect(() => { supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? null)); }, []);
+  const handleSignOut = async () => {
+    setSigningOut(true);
+    const { error } = await supabase.auth.signOut();
+    setSigningOut(false);
+    if (error) { toast.error("Sign out failed: " + error.message); return; }
+    navigate({ to: "/login", replace: true });
+  };
   return (
     <div className="sky relative min-h-screen">
       <CitySkyline className="pointer-events-none fixed inset-x-0 bottom-0 h-[45vh] w-full opacity-70" />
@@ -43,17 +55,11 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Link to="/team" className={navCls} activeProps={navActive}><Users className="h-4 w-4" aria-hidden /> Team</Link>
           </nav>
           <div className="mt-auto border-t border-sidebar-border pt-4">
-            {user ? (
-              <>
-                <p className="px-2 text-sm font-medium">{user.name}</p>
-                <p className="px-2 text-xs text-muted-foreground">{user.role}</p>
-                <Button size="sm" variant="ghost" className="mt-3 w-full justify-start" onClick={() => { signOut(); navigate({ to: "/login" }); }}>
-                  <LogOut className="mr-2 h-4 w-4" /> Sign out
-                </Button>
-              </>
-            ) : (
-              <Button size="sm" variant="outline" className="w-full" asChild><Link to="/login"><LogIn className="mr-2 h-4 w-4" /> Sign in (demo)</Link></Button>
-            )}
+            <p className="px-2 text-xs text-muted-foreground">Signed in as</p>
+            <p className="truncate px-2 font-mono text-xs" title={email ?? ""}>{email ?? "…"}</p>
+            <Button size="sm" variant="ghost" className="mt-3 w-full justify-start" disabled={signingOut} onClick={handleSignOut}>
+              <LogOut className="mr-2 h-4 w-4" /> {signingOut ? "Signing out…" : "Sign out"}
+            </Button>
           </div>
         </aside>
         <main className="fade-in mx-auto w-full max-w-6xl px-10 py-10">{children}</main>
