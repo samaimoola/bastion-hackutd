@@ -98,22 +98,23 @@ export function BastionGuide({
     input.current?.focus();
   };
   return (
-    <div className="mx-auto flex h-[min(760px,75vh)] min-h-[460px] max-w-3xl flex-col">
+    <div className="mx-auto flex h-[min(760px,70dvh)] min-h-[420px] w-full max-w-3xl flex-col border-t border-border pt-3">
       <Conversation className="min-h-0 flex-1">
         <ConversationContent className="gap-7 px-0 py-5">
           {messages.length === 0 && (
             <div className="flex flex-col items-center py-8 text-center">
               <BastionEmblem className="mb-4 h-12 w-12" />
-              <h2 className="text-2xl">Where would you like to start?</h2>
-              <div className="mt-6 flex flex-wrap justify-center gap-2">
+              <h2 className="text-2xl">What do you need help with?</h2>
+              <div className="mt-6 grid w-full max-w-xl gap-3 sm:grid-cols-3">
                 {[
-                  "How do I add a task?",
-                  "How do I record a timeline event?",
-                  "Where is the Response Brief?",
+                  "What should I do first?",
+                  "How do I update an incident?",
+                  "How do I invite someone?",
                 ].map((text) => (
                   <Button
                     key={text}
                     variant="outline"
+                    className="h-auto min-h-14 whitespace-normal px-4 py-3 text-left"
                     onClick={() => {
                       setDraft(text);
                       input.current?.focus();

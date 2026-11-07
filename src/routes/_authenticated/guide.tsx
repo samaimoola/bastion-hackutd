@@ -31,8 +31,8 @@ function GuidePage() {
   const { data } = useSuspenseQuery(historyOptions);
   const messages = Array.isArray(data.messages) ? (data.messages as unknown as UIMessage[]) : [];
   return (
-    <AppShell>
-      <PageHeader eyebrow="Workspace help" title="Bastion Guide" />
+    <AppShell mode="account">
+      <div className="mx-auto max-w-3xl text-center"><PageHeader eyebrow="Your workspace assistant" title="Bastion Guide" /></div>
       <BastionGuide initialMessages={messages} blockedReason={data.blockedReason} />
     </AppShell>
   );
