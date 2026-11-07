@@ -37,7 +37,8 @@ describe("Incident database authorization", () => {
   beforeAll(async () => {
     db = new PGlite();
     await db.exec(`
-      CREATE ROLE anon; CREATE ROLE authenticated;
+      CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role;
+      ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT TRUNCATE, REFERENCES, TRIGGER ON TABLES TO authenticated, service_role;
       CREATE SCHEMA auth;
       CREATE TABLE auth.users (id uuid PRIMARY KEY);
       CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
@@ -49,6 +50,10 @@ describe("Incident database authorization", () => {
     const file = readdirSync(folder).find((name) => readFileSync(`${folder}${name}`, "utf8").includes("CREATE TABLE public.incidents"));
     if (!file) throw new Error("Incident foundation migration is missing");
     await db.exec(readFileSync(`${folder}${file}`, "utf8"));
+    for (const name of readdirSync(folder).sort()) {
+      const sql = readFileSync(`${folder}${name}`, "utf8");
+      if (sql.includes("REVOKE ALL ON public.incidents, public.incident_members")) await db.exec(sql);
+    }
   }, 30000);
   beforeEach(async () => {
     await db.exec("BEGIN");
@@ -147,5 +152,11 @@ describe("Incident database authorization", () => {
   });
   it("protects internal trigger functions from direct execution", async () => {
     expect((await db.query("SELECT has_function_privilege('authenticated', 'private.guard_incident_membership()', 'execute') AS allowed")).rows).toEqual([{ allowed: false }]);
+  });
+  it("removes inherited nonessential table grants", async () => {
+    for (const role of ["authenticated", "anon", "service_role"]) {
+      expect((await db.query("SELECT has_table_privilege($1, 'public.incidents', 'TRUNCATE') AS allowed", [role])).rows).toEqual([{ allowed: false }]);
+      expect((await db.query("SELECT has_table_privilege($1, 'public.incident_members', 'TRIGGER') AS allowed", [role])).rows).toEqual([{ allowed: false }]);
+    }
   });
 });
