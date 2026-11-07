@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, WifiOff } from "lucide-react";
 import { AppShell, StageBadge, SeverityBadge, SystemBadge, TaskBadge } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { fmt, useDemo, type Severity, type Stage, type SystemStatus, type TaskStatus } from "@/lib/demo-store";
+import { fmt, type Severity, type Stage, type SystemStatus, type TaskStatus } from "@/lib/demo-store";
+import { useWorkspace } from "@/lib/workspace-api";
+import { WorkspaceOverview } from "@/components/workspace-overview";
+import { WorkspaceTimeline } from "@/components/workspace-timeline";
 
 const stages: Stage[] = ["Detection", "Containment", "Eradication", "Recovery", "Post-incident"];
 const severities: Severity[] = ["Critical", "High", "Medium", "Low"];
@@ -40,40 +43,49 @@ function Pick<T extends string>({ value, options, onChange, label, className = "
 }
 
 function Workspace() {
-  const { incident: i } = useDemo();
+  const { incident: i, memberName, connection } = useWorkspace();
+  const { id } = Route.useParams();
+  const [tab, setTab] = useState("overview");
+  const [updateOpen, setUpdateOpen] = useState(false);
+  const addUpdate = () => { setTab("timeline"); setUpdateOpen(true); };
+  if (id !== i.id) return <AppShell><h1 className="text-xl">Incident not found</h1><Button asChild variant="outline" className="mt-4"><Link to="/">All incidents</Link></Button></AppShell>;
   return (
     <AppShell>
-      <Link to="/" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"><ChevronLeft className="h-4 w-4" /> All incidents</Link>
-      <div className="mt-3 flex flex-wrap items-center gap-3">
-        <span className="font-mono text-xs text-muted-foreground">{i.id}</span>
-        <SeverityBadge s={i.severity} />
-        <StageBadge s={i.stage} />
-      </div>
-      <h1 className="mt-3 text-3xl font-medium">{i.title}</h1>
-      <Tabs defaultValue="overview" className="mt-8">
-        <TabsList className="h-auto w-full justify-start gap-6 rounded-none border-b border-border bg-transparent p-0 [&>button]:rounded-none [&>button]:border-b-2 [&>button]:border-transparent [&>button]:bg-transparent [&>button]:px-0.5 [&>button]:pb-3 [&>button]:pt-1 [&>button]:text-sm [&>button]:text-muted-foreground [&>button]:shadow-none [&>button:hover]:text-foreground [&>button[data-state=active]]:border-primary [&>button[data-state=active]]:bg-transparent [&>button[data-state=active]]:text-foreground [&>button[data-state=active]]:shadow-none">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="systems">Affected Systems</TabsTrigger>
-          <TabsTrigger value="tasks">Tasks</TabsTrigger>
-          <TabsTrigger value="timeline">Timeline</TabsTrigger>
-          <TabsTrigger value="chat">Team Chat</TabsTrigger>
-        </TabsList>
-        <TabsContent className="fade-in mt-6" value="overview"><OverviewTab /></TabsContent>
-        <TabsContent className="fade-in mt-6" value="systems"><SystemsTab /></TabsContent>
-        <TabsContent className="fade-in mt-6" value="tasks"><TasksTab /></TabsContent>
-        <TabsContent className="fade-in mt-6" value="timeline"><TimelineTab /></TabsContent>
-        <TabsContent className="fade-in mt-6" value="chat"><ChatTab /></TabsContent>
+      <Link to="/" className="inline-flex min-h-11 items-center text-sm text-muted-foreground hover:text-foreground"><ChevronLeft className="h-4 w-4" /> All incidents</Link>
+      <header className="border-b border-border pb-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-mono text-xs text-muted-foreground">{i.id}</span>
+          <SeverityBadge s={i.severity} /><StageBadge s={i.stage} />
+        </div>
+        <h1 className="mt-2 text-2xl font-medium leading-snug">{i.title}</h1>
+        <dl className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-xs">
+          <div className="flex gap-2"><dt className="text-muted-foreground">Commander</dt><dd>{memberName(i.commanderId)}</dd></div>
+          <div className="flex gap-2"><dt className="text-muted-foreground">Last update</dt><dd className="font-mono">{fmt(i.lastUpdate)}</dd></div>
+          <div className="flex items-center gap-2 text-muted-foreground"><WifiOff className="size-3.5" aria-hidden /><dt className="sr-only">Connection</dt><dd>{connection}</dd></div>
+        </dl>
+      </header>
+      <Tabs value={tab} onValueChange={setTab} className="mt-3">
+        <div className="max-w-full overflow-x-auto">
+          <TabsList aria-label="Incident workspace" className="h-auto min-w-max justify-start gap-4 rounded-none border-b border-border bg-transparent p-0 [&>button]:min-h-11 [&>button]:rounded-none [&>button]:border-b-2 [&>button]:border-transparent [&>button]:bg-transparent [&>button]:px-1 [&>button]:text-sm [&>button]:text-muted-foreground [&>button]:shadow-none [&>button:hover]:text-foreground [&>button[data-state=active]]:border-primary [&>button[data-state=active]]:text-foreground">
+            <TabsTrigger value="overview">Overview</TabsTrigger><TabsTrigger value="timeline">Timeline</TabsTrigger><TabsTrigger value="systems">Affected Systems &amp; Data</TabsTrigger><TabsTrigger value="tasks">Tasks</TabsTrigger><TabsTrigger value="chat">Communications</TabsTrigger>
+          </TabsList>
+        </div>
+        <TabsContent className="fade-in mt-5" value="overview"><WorkspaceOverview onUpdate={addUpdate} onSystems={() => setTab("systems")} onTasks={() => setTab("tasks")}><OverviewTab /></WorkspaceOverview></TabsContent>
+        <TabsContent className="fade-in mt-5" value="timeline"><WorkspaceTimeline open={updateOpen} setOpen={setUpdateOpen} /></TabsContent>
+        <TabsContent className="fade-in mt-5" value="systems"><SystemsTab /></TabsContent>
+        <TabsContent className="fade-in mt-5" value="tasks"><TasksTab /></TabsContent>
+        <TabsContent className="fade-in mt-5" value="chat"><ChatTab /></TabsContent>
       </Tabs>
     </AppShell>
   );
 }
 
 function OverviewTab() {
-  const { incident: i, updateIncident, members, memberName } = useDemo();
+  const { incident: i, updateIncident, members, memberName } = useWorkspace();
   const [action, setAction] = useState("");
   return (
     <div className="grid gap-6 md:grid-cols-3">
-      <Card className="panel border-border md:col-span-2">
+      <section className="min-w-0 md:col-span-2">
         <CardHeader><CardTitle className="font-display text-lg font-medium">Summary</CardTitle></CardHeader>
         <CardContent className="space-y-6">
           <p className="text-sm leading-relaxed">{i.summary}</p>
@@ -89,13 +101,13 @@ function OverviewTab() {
               {i.nextActions.length === 0 && <li className="text-sm text-muted-foreground">No pending actions.</li>}
             </ul>
             <form className="mt-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); if (!action.trim()) return; updateIncident({ nextActions: [...i.nextActions, action.trim()] }); setAction(""); }}>
-              <Input placeholder="Add next action" value={action} onChange={(e) => setAction(e.target.value)} />
+              <Input aria-label="Add next action" maxLength={500} placeholder="Add next action" value={action} onChange={(e) => setAction(e.target.value)} />
               <Button type="submit" variant="secondary">Add</Button>
             </form>
           </div>
         </CardContent>
-      </Card>
-      <Card className="panel border-border">
+      </section>
+      <section className="min-w-0">
         <CardHeader><CardTitle className="font-display text-lg font-medium">Details</CardTitle></CardHeader>
         <CardContent className="space-y-4 text-sm">
           <div className="space-y-1"><p className="text-muted-foreground">Severity</p><Pick label="Severity" value={i.severity} options={severities} onChange={(v) => updateIncident({ severity: v })} className="w-full" /></div>
@@ -110,13 +122,13 @@ function OverviewTab() {
           <div><p className="text-muted-foreground">Declared</p><p>{fmt(i.declaredAt)}</p></div>
           <div><p className="text-muted-foreground">Last update</p><p>{fmt(i.lastUpdate)}</p></div>
         </CardContent>
-      </Card>
+      </section>
     </div>
   );
 }
 
 function SystemsTab() {
-  const { systems, setSystemStatus, addSystem } = useDemo();
+  const { systems, setSystemStatus, addSystem } = useWorkspace();
   const [name, setName] = useState("");
   const [type, setType] = useState("");
   return (
@@ -137,8 +149,8 @@ function SystemsTab() {
         </TableBody>
       </Table>
       <form className="flex flex-wrap gap-2 border-t border-border p-4" onSubmit={(e) => { e.preventDefault(); addSystem({ name, type, owner: "Unassigned", status: "Under review", note: "" }); setName(""); setType(""); }}>
-        <Input required placeholder="Hostname" value={name} onChange={(e) => setName(e.target.value)} className="w-48" />
-        <Input required placeholder="Type" value={type} onChange={(e) => setType(e.target.value)} className="w-48" />
+        <Input aria-label="Hostname" required maxLength={100} placeholder="Hostname" value={name} onChange={(e) => setName(e.target.value)} className="w-48" />
+        <Input aria-label="System type" required maxLength={100} placeholder="Type" value={type} onChange={(e) => setType(e.target.value)} className="w-48" />
         <Button type="submit" variant="secondary">Add system</Button>
       </form>
     </Card>
@@ -146,7 +158,7 @@ function SystemsTab() {
 }
 
 function TasksTab() {
-  const { tasks, addTask, setTaskStatus, members, memberName } = useDemo();
+  const { tasks, addTask, setTaskStatus, members, memberName } = useWorkspace();
   const [title, setTitle] = useState("");
   const [assignee, setAssignee] = useState("m2");
   return (
@@ -166,7 +178,7 @@ function TasksTab() {
         </TableBody>
       </Table>
       <form className="flex flex-wrap gap-2 border-t border-border p-4" onSubmit={(e) => { e.preventDefault(); addTask({ title, assigneeId: assignee, status: "Open", due: new Date(Date.now() + 4 * 3600e3).toISOString() }); setTitle(""); }}>
-        <Input required placeholder="New task" value={title} onChange={(e) => setTitle(e.target.value)} className="min-w-64 flex-1" />
+        <Input aria-label="New task" required maxLength={200} placeholder="New task" value={title} onChange={(e) => setTitle(e.target.value)} className="min-w-0 flex-1 basis-64" />
         <Select value={assignee} onValueChange={setAssignee}>
           <SelectTrigger className="w-48" aria-label="Assignee"><SelectValue /></SelectTrigger>
           <SelectContent>{members.filter((m) => m.active).map((m) => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent>
@@ -177,32 +189,8 @@ function TasksTab() {
   );
 }
 
-function TimelineTab() {
-  const { timeline, addEvent } = useDemo();
-  const [text, setText] = useState("");
-  return (
-    <Card className="panel border-border">
-      <CardContent className="pt-6">
-        <form className="mb-6 flex gap-2" onSubmit={(e) => { e.preventDefault(); if (text.trim()) { addEvent(text.trim()); setText(""); } }}>
-          <Input placeholder="Log an event" value={text} onChange={(e) => setText(e.target.value)} />
-          <Button type="submit" variant="secondary">Log event</Button>
-        </form>
-        <ol className="relative space-y-5 border-l border-border pl-6">
-          {[...timeline].reverse().map((e) => (
-            <li key={e.id}>
-              <span className="absolute -left-1.5 mt-1.5 h-3 w-3 rounded-full border-2 border-background bg-primary" aria-hidden />
-              <p className="text-xs text-muted-foreground"><time className="font-mono">{fmt(e.at)}</time> · <span className="font-medium text-foreground/85">{e.author}</span></p>
-              <p className="mt-0.5 text-sm">{e.text}</p>
-            </li>
-          ))}
-        </ol>
-      </CardContent>
-    </Card>
-  );
-}
-
 function ChatTab() {
-  const { chat, sendChat, memberName } = useDemo();
+  const { chat, sendChat, memberName } = useWorkspace();
   const [text, setText] = useState("");
   const send = () => { if (text.trim()) { sendChat(text.trim()); setText(""); } };
   return (
@@ -217,7 +205,7 @@ function ChatTab() {
           ))}
         </div>
         <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); send(); }}>
-          <Textarea rows={2} placeholder="Message the response team (demo, not delivered to anyone)" value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} />
+          <Textarea aria-label="Message the response team" maxLength={2000} rows={2} placeholder="Message the response team (demo, not delivered to anyone)" value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} />
           <Button type="submit">Send</Button>
         </form>
       </CardContent>

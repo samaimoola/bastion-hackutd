@@ -22,7 +22,7 @@ export function Wordmark() {
   return (
     <span className="flex items-center gap-2.5">
       <BastionEmblem className="h-8 w-8" />
-      <span className="font-display text-xl font-medium tracking-tight">Bastion</span>
+          <span className="font-display text-xl font-medium">Bastion</span>
     </span>
   );
 }
@@ -46,15 +46,15 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="sky relative min-h-screen">
       <CitySkyline className="pointer-events-none fixed inset-x-0 bottom-0 h-[45vh] w-full opacity-70" />
       <DemoBanner />
-      <div className="relative flex min-h-[calc(100vh-29px)]">
-        <aside className="sticky top-0 flex h-[calc(100vh-29px)] w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-4 py-6 backdrop-blur-sm">
+      <div className="relative flex min-h-[calc(100vh-29px)] flex-col md:flex-row">
+        <aside className="flex shrink-0 flex-col border-b border-sidebar-border bg-sidebar px-4 py-3 md:sticky md:top-0 md:h-screen md:w-48 md:border-b-0 md:border-r md:py-5">
           <Link to="/" className="px-2" aria-label="Bastion home"><Wordmark /></Link>
-          <p className="eyebrow mt-8 px-3">Workspace</p>
-          <nav className="mt-2 flex flex-col gap-1">
+          <p className="eyebrow mt-5 hidden px-3 md:block">Workspace</p>
+          <nav aria-label="Main navigation" className="mt-2 flex gap-1 md:flex-col">
             <Link to="/" className={navCls} activeProps={navActive} activeOptions={{ exact: true }}><Siren className="h-4 w-4" aria-hidden /> Incidents</Link>
             <Link to="/team" className={navCls} activeProps={navActive}><Users className="h-4 w-4" aria-hidden /> Team</Link>
           </nav>
-          <div className="mt-auto border-t border-sidebar-border pt-4">
+          <div className="mt-3 border-t border-sidebar-border pt-3 md:mt-auto">
             <p className="px-2 text-xs text-muted-foreground">Signed in as</p>
             <p className="truncate px-2 font-mono text-xs" title={email ?? ""}>{email ?? "…"}</p>
             <Button size="sm" variant="ghost" className="mt-3 w-full justify-start" disabled={signingOut} onClick={handleSignOut}>
@@ -62,7 +62,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </Button>
           </div>
         </aside>
-        <main className="fade-in mx-auto w-full max-w-6xl px-10 py-10">{children}</main>
+        <main className="fade-in mx-auto min-w-0 w-full max-w-6xl px-4 py-4 sm:px-6 md:py-6">{children}</main>
       </div>
     </div>
   );

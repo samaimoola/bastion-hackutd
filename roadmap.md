@@ -1,0 +1,17 @@
+# Bastion frontend improvements
+
+## This increment
+- [x] Compact, accessible workspace header and responsive tabs.
+- [x] Typed frontend service boundary; retain explicit in-memory demo mode and existing authentication.
+- [x] Overview with record-derived counts, urgent tasks, latest updates, and action shortcuts.
+- [x] Validated Timeline entries with type, author, event time, recorded time, and UTC labels.
+- [x] Deterministic Response Brief from existing records.
+- [x] Test derived rules, validation, Timeline form submission, and signed-out redirect in the browser.
+- Signed-in workspace visual/end-to-end checks unavailable: external Supabase session cannot be supplied by the testing tools.
+
+## Subsequent increments (deliberately deferred per brief)
+- Independent impact/containment and exfiltration fields, searchable assets, add/edit forms.
+- Task priority, owner and due-date editing, overdue highlighting.
+- Communications sending/failure/retry flow with retained drafts.
+- Team invitations and access controls driven by backend-provided permissions; backend contract required for live enforcement.
+- Live adapter and permission integration: partner's API contract required; never fall back to demo after errors.
