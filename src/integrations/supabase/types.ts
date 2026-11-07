@@ -44,15 +44,151 @@ export type Database = {
         }
         Relationships: []
       }
+      incident_members: {
+        Row: {
+          incident_id: string
+          role: Database["public"]["Enums"]["incident_member_role"]
+          user_id: string
+        }
+        Insert: {
+          incident_id: string
+          role: Database["public"]["Enums"]["incident_member_role"]
+          user_id: string
+        }
+        Update: {
+          incident_id?: string
+          role?: Database["public"]["Enums"]["incident_member_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_members_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incidents: {
+        Row: {
+          created_at: string
+          creator_id: string
+          description: string
+          id: string
+          response_stage: Database["public"]["Enums"]["incident_response_stage"]
+          severity: Database["public"]["Enums"]["incident_severity"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          creator_id: string
+          description?: string
+          id?: string
+          response_stage?: Database["public"]["Enums"]["incident_response_stage"]
+          severity?: Database["public"]["Enums"]["incident_severity"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          creator_id?: string
+          description?: string
+          id?: string
+          response_stage?: Database["public"]["Enums"]["incident_response_stage"]
+          severity?: Database["public"]["Enums"]["incident_severity"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_incident: {
+        Args: {
+          _description?: string
+          _response_stage?: Database["public"]["Enums"]["incident_response_stage"]
+          _severity?: Database["public"]["Enums"]["incident_severity"]
+          _title: string
+        }
+        Returns: {
+          created_at: string
+          creator_id: string
+          description: string
+          id: string
+          response_stage: Database["public"]["Enums"]["incident_response_stage"]
+          severity: Database["public"]["Enums"]["incident_severity"]
+          title: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "incidents"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      remove_incident_member: {
+        Args: { _incident_id: string; _user_id: string }
+        Returns: undefined
+      }
+      set_incident_member: {
+        Args: {
+          _incident_id: string
+          _role: Database["public"]["Enums"]["incident_member_role"]
+          _user_id: string
+        }
+        Returns: {
+          incident_id: string
+          role: Database["public"]["Enums"]["incident_member_role"]
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "incident_members"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      update_incident_details: {
+        Args: {
+          _description: string
+          _incident_id: string
+          _response_stage: Database["public"]["Enums"]["incident_response_stage"]
+          _severity: Database["public"]["Enums"]["incident_severity"]
+          _title: string
+        }
+        Returns: {
+          created_at: string
+          creator_id: string
+          description: string
+          id: string
+          response_stage: Database["public"]["Enums"]["incident_response_stage"]
+          severity: Database["public"]["Enums"]["incident_severity"]
+          title: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "incidents"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
-      [_ in never]: never
+      incident_member_role: "commander" | "responder" | "viewer"
+      incident_response_stage:
+        | "Detection"
+        | "Containment"
+        | "Eradication"
+        | "Recovery"
+        | "Post-incident"
+      incident_severity: "Critical" | "High" | "Medium" | "Low"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -179,6 +315,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      incident_member_role: ["commander", "responder", "viewer"],
+      incident_response_stage: [
+        "Detection",
+        "Containment",
+        "Eradication",
+        "Recovery",
+        "Post-incident",
+      ],
+      incident_severity: ["Critical", "High", "Medium", "Low"],
+    },
   },
 } as const

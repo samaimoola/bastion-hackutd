@@ -30,6 +30,7 @@ use the editor.
 <!-- LOVABLE:END -->
 
 ## Project rules
+- Real incident writes use authenticated, narrowly scoped database RPCs; parent-row writes serialize detail authorization and membership changes, private role lookup avoids recursive RLS, and a membership trigger protects the last commander. Direct client writes are not granted.
 - Bastion Guide uses an authenticated streaming server route and owner-scoped Supabase conversation history; stored history is authoritative, and AI guidance never mutates incident records.
 - Explicit guide navigation commands use a local allowlisted destination parser and URL-backed workspace tabs, keeping page navigation independent of AI availability.
 - Shared appearance is controlled by ThemeProvider using semantic CSS tokens and a saved browser preference; authentication and demo state remain independent of theme.
