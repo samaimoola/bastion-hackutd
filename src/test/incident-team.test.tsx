@@ -30,5 +30,9 @@ it("generates a responder invitation using the existing incident only", async ()
   membership.mockResolvedValue("commander"); issue.mockResolvedValue({ token: "a".repeat(64), expiresAt: "2026-11-09T00:00:00Z" }); mount();
   fireEvent.click(await screen.findByRole("button", { name: "Generate invitation link" }));
   await waitFor(() => expect(issue).toHaveBeenCalledWith({ data: { id, role: "responder" } }));
-  expect(screen.getByLabelText("Invitation link")).toHaveValue(`${window.location.origin}/invite#invite=${"a".repeat(64)}`);
+  const url = new URL((screen.getByLabelText("Invitation link") as HTMLInputElement).value);
+  expect(url.origin).toBe("https://incident-command-harbor.lovable.app");
+  expect(url.pathname).toBe("/invite");
+  expect(url.search).toBe("");
+  expect(url.hash === `#invite=${"a".repeat(64)}`).toBe(true);
 });
