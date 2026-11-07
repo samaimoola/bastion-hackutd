@@ -1,10 +1,15 @@
 import { z } from "zod";
 export const guideRequestSchema = z.object({
-  messages: z.array(z.object({
-    id: z.string().min(1).max(200),
-    role: z.enum(["user", "assistant"]),
-    parts: z.array(z.object({ type: z.literal("text"), text: z.string().max(12000) })).min(1),
-  })).min(1).max(300),
+  messages: z
+    .array(
+      z.object({
+        id: z.string().min(1).max(200),
+        role: z.enum(["user", "assistant"]),
+        parts: z.array(z.object({ type: z.literal("text"), text: z.string().max(12000) })).min(1),
+      }),
+    )
+    .min(1)
+    .max(300),
 });
 
 export function validateGuideTurn(input: unknown) {

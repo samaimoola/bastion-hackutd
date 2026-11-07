@@ -9,7 +9,12 @@ import {
 
 export function createResponsesCall(
   request: Request,
-  config: { baseURL: string; apiKey: string; model: string; onUpstreamError?: (status: number, message: string) => Promise<void> },
+  config: {
+    baseURL: string;
+    apiKey: string;
+    model: string;
+    onUpstreamError?: (status: number, message: string) => Promise<void>;
+  },
   messages: ModelMessage[],
   instructions?: string,
 ) {
@@ -21,8 +26,12 @@ export function createResponsesCall(
     fetch: async (input, init) => {
       const response = await runIdFetch.fetch(input, init);
       if (!response.ok && config.onUpstreamError) {
-        const body = await response.clone().json().catch(() => null);
-        const message = body?.error?.message ?? body?.message ?? "The AI guide service is unavailable.";
+        const body = await response
+          .clone()
+          .json()
+          .catch(() => null);
+        const message =
+          body?.error?.message ?? body?.message ?? "The AI guide service is unavailable.";
         await config.onUpstreamError(response.status, message);
       }
       return response;
@@ -54,6 +63,9 @@ export function createResponsesCall(
     result,
     wrap: (response: Response) => withLovableAiGatewayRunIdHeader(response, runIdFetch),
     response: () =>
-      withLovableAiGatewayRunIdHeader(result.toUIMessageStreamResponse({ sendReasoning: true }), runIdFetch),
+      withLovableAiGatewayRunIdHeader(
+        result.toUIMessageStreamResponse({ sendReasoning: true }),
+        runIdFetch,
+      ),
   };
 }
