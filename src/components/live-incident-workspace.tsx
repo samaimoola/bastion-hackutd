@@ -9,6 +9,7 @@ import { EditIncidentAction } from "./edit-incident-action";
 import { IncidentTeamAccess } from "./incident-team-access";
 import { RealAffectedSystems } from "./real-affected-systems";
 import { RealCommunications } from "./real-communications";
+import { RealTimeline } from "./real-timeline";
 
 const formatTime = (value: string) => new Date(value).toLocaleString("en-GB", { timeZone: "UTC", dateStyle: "medium", timeStyle: "short" });
 
@@ -31,7 +32,7 @@ export function LiveIncidentWorkspace({ incident: i, userId, tab, setTab }: { in
       <TabsContent value="overview" className="mt-8"><div className="grid gap-10 lg:grid-cols-[minmax(0,2fr)_minmax(240px,1fr)]"><section className="min-w-0"><h2 className="text-xl font-medium">What happened</h2><p className="mt-4 whitespace-pre-wrap break-words text-sm leading-7">{i.summary || "No description yet."}</p><div className="mt-10 border-t border-border pt-6"><h2 className="text-xl font-medium">Next steps</h2><p className="mt-3 text-sm text-muted-foreground">Next steps are not available for real incidents yet.</p><Button disabled variant="outline" className="mt-4" aria-describedby="real-edit-disabled">Add next action</Button></div></section><section className="min-w-0 border-t border-border pt-6 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0"><h2 className="text-xl font-medium">Incident details</h2><dl className="mt-4 space-y-5 text-sm"><div><dt className="text-muted-foreground">Severity</dt><dd className="mt-1">{i.severity}</dd></div><div><dt className="text-muted-foreground">Response stage</dt><dd className="mt-1">{i.stage}</dd></div><div><dt className="text-muted-foreground">Created</dt><dd className="mt-1">{formatTime(i.declaredAt)} UTC</dd></div></dl><details className="mt-6 text-xs text-muted-foreground"><summary className="cursor-pointer">Incident reference</summary><p className="mt-2 break-all font-mono">{i.id}</p></details></section></div><p id="real-edit-disabled" className="mt-5 text-xs text-muted-foreground">Next steps are not connected yet.</p></TabsContent>
       <TabsContent value="systems"><RealAffectedSystems key={`${userId}:${i.id}`} incidentId={i.id} userId={userId} /></TabsContent>
       <TabsContent value="tasks"><UnconnectedSection title="Tasks" action="Add task" /></TabsContent>
-      <TabsContent value="timeline"><UnconnectedSection title="Timeline entries" action="Record update" /></TabsContent>
+      <TabsContent value="timeline"><RealTimeline key={`${userId}:${i.id}`} incidentId={i.id} userId={userId} /></TabsContent>
       <TabsContent value="chat"><RealCommunications key={`${userId}:${i.id}`} incidentId={i.id} userId={userId} /></TabsContent>
     </Tabs>
   </AppShell>;

@@ -44,6 +44,62 @@ export type Database = {
         }
         Relationships: []
       }
+      incident_activity: {
+        Row: {
+          actor_id: string
+          actor_name: string | null
+          details: Json
+          entity_id: string
+          event_type: string
+          id: string
+          incident_id: string
+          occurred_at: string
+        }
+        Insert: {
+          actor_id: string
+          actor_name?: string | null
+          details: Json
+          entity_id: string
+          event_type: string
+          id?: string
+          incident_id: string
+          occurred_at?: string
+        }
+        Update: {
+          actor_id?: string
+          actor_name?: string | null
+          details?: Json
+          entity_id?: string
+          event_type?: string
+          id?: string
+          incident_id?: string
+          occurred_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_activity_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incident_activity_recording: {
+        Row: {
+          began_at: string
+          singleton: boolean
+        }
+        Insert: {
+          began_at?: string
+          singleton?: boolean
+        }
+        Update: {
+          began_at?: string
+          singleton?: boolean
+        }
+        Relationships: []
+      }
       incident_affected_systems: {
         Row: {
           assessment: string
