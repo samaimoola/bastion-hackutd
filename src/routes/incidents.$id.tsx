@@ -74,8 +74,8 @@ function OverviewTab() {
   return (
     <div className="grid gap-6 md:grid-cols-3">
       <Card className="panel border-border md:col-span-2">
-        <Card className="panel border-border"Header><Card className="panel border-border"Title className="text-base">Summary</CardTitle></CardHeader>
-        <Card className="panel border-border"Content className="space-y-6">
+        <CardHeader><CardTitle className="font-display text-lg font-medium">Summary</CardTitle></CardHeader>
+        <CardContent className="space-y-6">
           <p className="text-sm leading-relaxed">{i.summary}</p>
           <div>
             <h3 className="eyebrow">Next actions</h3>
@@ -96,8 +96,8 @@ function OverviewTab() {
         </CardContent>
       </Card>
       <Card className="panel border-border">
-        <Card className="panel border-border"Header><Card className="panel border-border"Title className="text-base">Details</CardTitle></CardHeader>
-        <Card className="panel border-border"Content className="space-y-4 text-sm">
+        <CardHeader><CardTitle className="font-display text-lg font-medium">Details</CardTitle></CardHeader>
+        <CardContent className="space-y-4 text-sm">
           <div className="space-y-1"><p className="text-muted-foreground">Severity</p><Pick label="Severity" value={i.severity} options={severities} onChange={(v) => updateIncident({ severity: v })} className="w-full" /></div>
           <div className="space-y-1"><p className="text-muted-foreground">Response stage</p><Pick label="Stage" value={i.stage} options={stages} onChange={(v) => updateIncident({ stage: v })} className="w-full" /></div>
           <div className="space-y-1">
@@ -182,7 +182,7 @@ function TimelineTab() {
   const [text, setText] = useState("");
   return (
     <Card className="panel border-border">
-      <Card className="panel border-border"Content className="pt-6">
+      <CardContent className="pt-6">
         <form className="mb-6 flex gap-2" onSubmit={(e) => { e.preventDefault(); if (text.trim()) { addEvent(text.trim()); setText(""); } }}>
           <Input placeholder="Log an event" value={text} onChange={(e) => setText(e.target.value)} />
           <Button type="submit" variant="secondary">Log event</Button>
@@ -207,7 +207,7 @@ function ChatTab() {
   const send = () => { if (text.trim()) { sendChat(text.trim()); setText(""); } };
   return (
     <Card className="panel border-border">
-      <Card className="panel border-border"Content className="space-y-4 pt-6">
+      <CardContent className="space-y-4 pt-6">
         <div className="space-y-3">
           {chat.map((m) => (
             <div key={m.id} className="rounded-lg border border-border bg-muted/60 px-4 py-3">
