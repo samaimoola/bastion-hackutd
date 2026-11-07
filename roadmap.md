@@ -1,6 +1,7 @@
 # Bastion frontend improvements
 
 ## This increment
+- [x] Add automatic page/tab navigation for explicit guide requests; destination tests pass and preview build is clean. Signed-in end-to-end navigation remains unverified because the external Supabase browser session is unavailable.
 - [x] Add a Bastion AI usage guide with one account-saved conversation, protected streaming, and theme-aware AI Elements presentation; eleven tests pass and preview build is clean.
 - [x] Verify real AI answers and follow-up history plus signed-out page/API rejection. New guide files pass lint; repository-wide lint retains pre-existing formatting issues and registry warnings.
 - [ ] Verify signed-in guide saving/reload, cross-account isolation, Stop and both-theme chat appearance; blocked by unavailable external Supabase browser session.
