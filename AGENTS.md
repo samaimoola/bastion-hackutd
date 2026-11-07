@@ -28,3 +28,6 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## Project rules
+- All demo data and mutations live in src/lib/demo-store.tsx (React context, in-memory) so the upcoming backend can replace one module.
