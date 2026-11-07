@@ -1,22 +1,4 @@
 import { createMiddleware } from "@tanstack/react-start";
-import { supabase } from "@/integrations/supabase/client";
-
-/**
- * Client function middleware: sends the current Supabase access token as a
- * Bearer header. It runs in the browser; during SSR it does nothing. With no
- * session it sends no Authorization header, so the server rejects the call.
- */
-export const forwardSupabaseToken = createMiddleware({ type: "function" }).client(
-  async ({ next }) => {
-    if (typeof window === "undefined") return next();
-
-    const { data } = await supabase.auth.getSession();
-    const token = data.session?.access_token;
-    if (!token) return next();
-
-    return next({ headers: { Authorization: `Bearer ${token}` } });
-  },
-);
 
 /**
  * Server function middleware: maps failures thrown by the generated

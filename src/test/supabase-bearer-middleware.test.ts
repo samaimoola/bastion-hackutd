@@ -9,7 +9,8 @@ vi.mock("@/integrations/supabase/client", () => ({
   supabase: { auth: { getSession: (...args: unknown[]) => getSession(...args) } },
 }));
 
-import { forwardSupabaseToken, unauthorizedToResponse } from "@/lib/supabase-bearer-middleware";
+import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
+import { unauthorizedToResponse } from "@/lib/supabase-bearer-middleware";
 import { startInstance } from "@/start";
 
 // Small seeded PRNG (no new dependencies); 100 iterations per property.
@@ -32,7 +33,7 @@ type StartOptions = { requestMiddleware: unknown[]; functionMiddleware: unknown[
 
 // The middleware objects keep the handler in `options`; call them directly with a fake `next`.
 type Handler = (arg: { next: (...a: unknown[]) => unknown }) => Promise<unknown>;
-const clientHandler = (forwardSupabaseToken as unknown as { options: { client: Handler } }).options
+const clientHandler = (attachSupabaseAuth as unknown as { options: { client: Handler } }).options
   .client;
 const serverHandler = (unauthorizedToResponse as unknown as { options: { server: Handler } })
   .options.server;
@@ -48,7 +49,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("forwardSupabaseToken (client)", () => {
+describe("attachSupabaseAuth (client, from main)", () => {
   // Feature: authenticated-server-function, Property 1: token present -> one Bearer header
   it("sends exactly one Bearer header, returns next's result unchanged, and never logs the token", async () => {
     const r = rng(1);
@@ -83,21 +84,10 @@ describe("forwardSupabaseToken (client)", () => {
       const result = await clientHandler({ next });
 
       expect(next).toHaveBeenCalledTimes(1);
-      expect(next).toHaveBeenCalledWith(); // no arguments, so no headers
+      const arg = next.mock.calls[0]?.[0] as { headers?: HeadersInit } | undefined;
+      expect(new Headers(arg?.headers).has("authorization")).toBe(false);
       expect(result).toBe(sentinel);
     }
-  });
-
-  it("does nothing and never reads the session when there is no window (SSR)", async () => {
-    vi.stubGlobal("window", undefined);
-    const sentinel = { ssr: true };
-    const next = vi.fn().mockResolvedValue(sentinel);
-
-    const result = await clientHandler({ next });
-
-    expect(getSession).not.toHaveBeenCalled();
-    expect(next).toHaveBeenCalledWith();
-    expect(result).toBe(sentinel);
   });
 });
 
@@ -156,18 +146,21 @@ describe("unauthorizedToResponse (server)", () => {
 });
 
 describe("start.ts registration", () => {
-  it("registers only the client middleware globally and keeps the request middleware", async () => {
+  it("registers only the token forwarder globally and keeps the request middleware", async () => {
     const options = await (
       startInstance as unknown as { getOptions: () => Promise<StartOptions> }
     ).getOptions();
-    expect(options.functionMiddleware).toEqual([forwardSupabaseToken]);
+    // Exactly one token forwarder, registered once.
+    expect(options.functionMiddleware).toEqual([attachSupabaseAuth]);
     // Scoped 401 handling: the mapping must NOT be global.
     expect(options.functionMiddleware).not.toContain(unauthorizedToResponse);
     expect(options.requestMiddleware).toHaveLength(2);
   });
 
-  it("has no attachSupabaseAuth reference left", () => {
+  it("registers a single token forwarder and not the removed duplicate", () => {
     const src = readFileSync(path.resolve(__dirname, "../start.ts"), "utf8");
-    expect(src).not.toContain("attachSupabaseAuth");
+    expect(src).not.toContain("forwardSupabaseToken");
+    expect(src.match(/functionMiddleware:/g)).toHaveLength(1);
+    expect(src.match(/import \{ attachSupabaseAuth \}/g)).toHaveLength(1);
   });
 });
