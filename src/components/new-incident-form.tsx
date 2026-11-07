@@ -1,0 +1,52 @@
+import { useRef, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { createIncident } from "@/lib/incidents.functions";
+import { createIncidentInputSchema, DESCRIPTION_MAX, TITLE_MAX, incidentSeveritySchema, incidentStageSchema, type CreateIncidentInput, type IncidentRecord } from "@/lib/incident-models";
+import { incidentKeys } from "@/lib/incident-queries";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Textarea } from "./ui/textarea";
+import { Label } from "./ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+
+export function NewIncidentForm({ userId, onCreated }: { userId: string; onCreated: (incident: IncidentRecord) => Promise<void> }) {
+  const queryClient = useQueryClient();
+  const create = useServerFn(createIncident);
+  const lock = useRef(false);
+  const [input, setInput] = useState<CreateIncidentInput>({ title: "", description: "", severity: "Medium", stage: "Detection" });
+  const [validation, setValidation] = useState<string | null>(null);
+  const [created, setCreated] = useState<IncidentRecord | null>(null);
+  const [navigationError, setNavigationError] = useState(false);
+  const mutation = useMutation({
+    mutationFn: create,
+    onSuccess: async (record) => {
+      setCreated(record);
+      queryClient.setQueryData(incidentKeys.detail(userId, record.id), record);
+      await queryClient.invalidateQueries({ queryKey: incidentKeys.list(userId) });
+      try { await onCreated(record); } catch { setNavigationError(true); }
+    },
+  });
+  return <form className="space-y-5" onSubmit={async (event) => {
+    event.preventDefault();
+    if (lock.current || created) return;
+    const parsed = createIncidentInputSchema.safeParse(input);
+    if (!parsed.success) { setValidation(parsed.error.issues[0]?.message ?? "Check the incident details."); return; }
+    setValidation(null);
+    lock.current = true;
+    try { await mutation.mutateAsync({ data: parsed.data }); } catch { /* mutation owns the error */ }
+    finally { lock.current = false; }
+  }}>
+    <fieldset disabled={mutation.isPending || Boolean(created)} className="space-y-5">
+      <div className="space-y-2"><Label htmlFor="incident-title">Title</Label><Input id="incident-title" required maxLength={TITLE_MAX} value={input.title} onChange={(e) => setInput({ ...input, title: e.target.value })} /></div>
+      <div className="space-y-2"><Label htmlFor="incident-description">Description</Label><Textarea id="incident-description" rows={4} maxLength={DESCRIPTION_MAX} value={input.description} onChange={(e) => setInput({ ...input, description: e.target.value })} /></div>
+      <div className="grid gap-5 sm:grid-cols-2">
+        <div className="space-y-2"><Label htmlFor="incident-severity">Severity</Label><Select value={input.severity} onValueChange={(value) => setInput({ ...input, severity: incidentSeveritySchema.parse(value) })}><SelectTrigger id="incident-severity"><SelectValue /></SelectTrigger><SelectContent>{incidentSeveritySchema.options.map((value) => <SelectItem key={value} value={value}>{value}</SelectItem>)}</SelectContent></Select></div>
+        <div className="space-y-2"><Label htmlFor="incident-stage">Response stage</Label><Select value={input.stage} onValueChange={(value) => setInput({ ...input, stage: incidentStageSchema.parse(value) })}><SelectTrigger id="incident-stage"><SelectValue /></SelectTrigger><SelectContent>{incidentStageSchema.options.map((value) => <SelectItem key={value} value={value}>{value}</SelectItem>)}</SelectContent></Select></div>
+      </div>
+    </fieldset>
+    {(validation || mutation.isError) && <p role="alert" className="text-sm text-destructive">{validation ?? (mutation.error instanceof Error ? mutation.error.message : "The incident could not be created. Please try again.")}</p>}
+    {navigationError && created && <div role="alert" className="space-y-3"><p className="text-sm">Incident saved, but the workspace could not be opened.</p><Button type="button" variant="outline" onClick={() => { void onCreated(created).catch(() => setNavigationError(true)); }}>Open saved incident</Button></div>}
+    <Button type="submit" disabled={mutation.isPending || Boolean(created)}>{mutation.isPending ? "Creating incident…" : created ? "Incident created" : "Create incident"}</Button>
+  </form>;
+}
