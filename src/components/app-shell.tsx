@@ -1,58 +1,86 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { Shield, FlaskConical } from "lucide-react";
+import { FlaskConical, Siren, Users, LogOut, LogIn } from "lucide-react";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { BastionEmblem, CitySkyline } from "@/components/city-skyline";
 import { useDemo, type Severity, type SystemStatus, type TaskStatus } from "@/lib/demo-store";
 
 export function DemoBanner() {
   return (
-    <div className="flex items-center justify-center gap-2 border-b border-warning/30 bg-warning/10 px-4 py-1.5 text-xs text-warning">
+    <div className="relative z-10 flex items-center justify-center gap-2 border-b border-warning/25 bg-background/90 px-4 py-1.5 text-xs text-warning">
       <FlaskConical className="h-3.5 w-3.5" aria-hidden />
       <span><strong>Demo mode:</strong> synthetic data, stored only in this browser tab. Changes reset on reload. Not connected to a backend.</span>
     </div>
   );
 }
 
+export function Wordmark() {
+  return (
+    <span className="flex items-center gap-2.5">
+      <BastionEmblem className="h-8 w-8" />
+      <span className="font-display text-xl font-medium tracking-tight">Bastion</span>
+    </span>
+  );
+}
+
+const navCls = "flex items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-foreground";
+const navActive = { className: "!border-primary/30 !bg-sidebar-accent !text-sidebar-accent-foreground shadow-[inset_3px_0_0_var(--primary)]" };
+
 export function AppShell({ children }: { children: ReactNode }) {
   const { user, signOut } = useDemo();
   const navigate = useNavigate();
-  const nav = "rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground";
-  const active = { className: "bg-accent text-foreground" };
   return (
-    <div className="min-h-screen bg-background">
+    <div className="sky relative min-h-screen">
+      <CitySkyline className="pointer-events-none fixed inset-x-0 bottom-0 h-[45vh] w-full opacity-70" />
       <DemoBanner />
-      <header className="border-b border-border bg-sidebar">
-        <div className="mx-auto flex h-14 max-w-7xl items-center gap-6 px-6">
-          <Link to="/" className="flex items-center gap-2 font-semibold">
-            <Shield className="h-5 w-5 text-primary" aria-hidden /> Bastion
-          </Link>
-          <nav className="flex gap-1">
-            <Link to="/" className={nav} activeProps={active} activeOptions={{ exact: true }}>Incidents</Link>
-            <Link to="/team" className={nav} activeProps={active}>Team</Link>
+      <div className="relative flex min-h-[calc(100vh-29px)]">
+        <aside className="sticky top-0 flex h-[calc(100vh-29px)] w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-4 py-6 backdrop-blur-sm">
+          <Link to="/" className="px-2" aria-label="Bastion home"><Wordmark /></Link>
+          <p className="eyebrow mt-8 px-3">Workspace</p>
+          <nav className="mt-2 flex flex-col gap-1">
+            <Link to="/" className={navCls} activeProps={navActive} activeOptions={{ exact: true }}><Siren className="h-4 w-4" aria-hidden /> Incidents</Link>
+            <Link to="/team" className={navCls} activeProps={navActive}><Users className="h-4 w-4" aria-hidden /> Team</Link>
           </nav>
-          <div className="ml-auto flex items-center gap-3 text-sm">
+          <div className="mt-auto border-t border-sidebar-border pt-4">
             {user ? (
               <>
-                <span className="text-muted-foreground">{user.name} · {user.role}</span>
-                <Button size="sm" variant="outline" onClick={() => { signOut(); navigate({ to: "/login" }); }}>Sign out</Button>
+                <p className="px-2 text-sm font-medium">{user.name}</p>
+                <p className="px-2 text-xs text-muted-foreground">{user.role}</p>
+                <Button size="sm" variant="ghost" className="mt-3 w-full justify-start" onClick={() => { signOut(); navigate({ to: "/login" }); }}>
+                  <LogOut className="mr-2 h-4 w-4" /> Sign out
+                </Button>
               </>
             ) : (
-              <Button size="sm" variant="outline" asChild><Link to="/login">Sign in (demo)</Link></Button>
+              <Button size="sm" variant="outline" className="w-full" asChild><Link to="/login"><LogIn className="mr-2 h-4 w-4" /> Sign in (demo)</Link></Button>
             )}
           </div>
-        </div>
-      </header>
-      <main className="mx-auto max-w-7xl px-6 py-8">{children}</main>
+        </aside>
+        <main className="fade-in mx-auto w-full max-w-6xl px-10 py-10">{children}</main>
+      </div>
     </div>
   );
 }
 
+export function PageHeader({ eyebrow, title, children }: { eyebrow: string; title: ReactNode; children?: ReactNode }) {
+  return (
+    <div className="mb-8">
+      <p className="eyebrow">{eyebrow}</p>
+      <h1 className="mt-2 text-3xl font-medium text-foreground">{title}</h1>
+      {children}
+    </div>
+  );
+}
+
+const pill = "rounded-full px-2.5 py-0.5 font-medium";
 const sevVariant: Record<Severity, BadgeProps["variant"]> = { Critical: "critical", High: "warning", Medium: "info", Low: "neutral" };
-export const SeverityBadge = ({ s }: { s: Severity }) => <Badge variant={sevVariant[s]}>Severity: {s}</Badge>;
+export const SeverityBadge = ({ s }: { s: Severity }) => (
+  <Badge variant={sevVariant[s]} className={pill}><span className="mr-1.5 h-1.5 w-1.5 rounded-full bg-current" aria-hidden />Severity: {s}</Badge>
+);
+export const StageBadge = ({ s }: { s: string }) => <Badge variant="info" className={pill}>Stage: {s}</Badge>;
 
 const sysVariant: Record<SystemStatus, BadgeProps["variant"]> = { Encrypted: "critical", Isolated: "warning", "Under review": "info", Restored: "success", Unaffected: "neutral" };
-export const SystemBadge = ({ s }: { s: SystemStatus }) => <Badge variant={sysVariant[s]}>{s}</Badge>;
+export const SystemBadge = ({ s }: { s: SystemStatus }) => <Badge variant={sysVariant[s]} className={pill}>{s}</Badge>;
 
 const taskVariant: Record<TaskStatus, BadgeProps["variant"]> = { Open: "neutral", "In progress": "info", Blocked: "warning", Done: "success" };
-export const TaskBadge = ({ s }: { s: TaskStatus }) => <Badge variant={taskVariant[s]}>{s}</Badge>;
+export const TaskBadge = ({ s }: { s: TaskStatus }) => <Badge variant={taskVariant[s]} className={pill}>{s}</Badge>;
