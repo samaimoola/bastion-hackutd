@@ -32,6 +32,13 @@ export const createIncidentInputSchema = z
   .strict();
 export type CreateIncidentInput = z.infer<typeof createIncidentInputSchema>;
 
+export const updateIncidentInputSchema = createIncidentInputSchema.required().extend({
+  id: z.string().uuid("Invalid incident ID."),
+});
+export type UpdateIncidentInput = z.infer<typeof updateIncidentInputSchema>;
+export type IncidentMemberRole = Database["public"]["Enums"]["incident_member_role"];
+export const canEditIncident = (role: IncidentMemberRole | null | undefined) => role === "commander" || role === "responder";
+
 export const getIncidentInputSchema = z
   .object({ id: z.string().uuid("Invalid incident ID.") })
   .strict();
@@ -67,12 +74,14 @@ export function toIncidentRecord(row: IncidentColumns): IncidentRecord {
   };
 }
 
-export type IncidentAction = "create" | "list" | "load";
+export type IncidentAction = "create" | "list" | "load" | "update" | "membership";
 
 const FALLBACK: Record<IncidentAction, string> = {
   create: "The incident could not be created. Please try again.",
   list: "Incidents could not be loaded. Please try again.",
   load: "The incident could not be loaded. Please try again.",
+  update: "The incident could not be saved. Please try again.",
+  membership: "Your incident membership could not be checked. Please try again.",
 };
 export const NOT_FOUND_MESSAGE = "Incident not found.";
 

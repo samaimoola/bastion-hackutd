@@ -70,7 +70,7 @@ function RealWorkspace() {
   const { data: incident } = useSuspenseQuery(incidentDetailOptions(authUser.id, id));
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
-  return <LiveIncidentWorkspace incident={incident} tab={search.tab ?? "overview"} setTab={(value) => { void navigate({ search: { tab: parseWorkspaceTab(value) }, replace: true }); }} />;
+  return <LiveIncidentWorkspace incident={incident} userId={authUser.id} tab={search.tab ?? "overview"} setTab={(value) => { void navigate({ search: { tab: parseWorkspaceTab(value) }, replace: true }); }} />;
 }
 
 function DemoWorkspace() {
