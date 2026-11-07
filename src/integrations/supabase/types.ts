@@ -44,6 +44,59 @@ export type Database = {
         }
         Relationships: []
       }
+      incident_affected_systems: {
+        Row: {
+          assessment: string
+          containment_status: string
+          created_at: string
+          created_by: string
+          data_conditions: string[]
+          data_description: string
+          id: string
+          incident_id: string
+          investigation_notes: string
+          resource_name: string
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          assessment: string
+          containment_status: string
+          created_at?: string
+          created_by: string
+          data_conditions: string[]
+          data_description?: string
+          id?: string
+          incident_id: string
+          investigation_notes?: string
+          resource_name: string
+          updated_at?: string
+          updated_by: string
+        }
+        Update: {
+          assessment?: string
+          containment_status?: string
+          created_at?: string
+          created_by?: string
+          data_conditions?: string[]
+          data_description?: string
+          id?: string
+          incident_id?: string
+          investigation_notes?: string
+          resource_name?: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_affected_systems_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       incident_invitations: {
         Row: {
           created_at: string
@@ -155,6 +208,37 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_incident_affected_system: {
+        Args: {
+          _assessment: string
+          _containment_status: string
+          _data_conditions: string[]
+          _data_description: string
+          _incident_id: string
+          _investigation_notes: string
+          _resource_name: string
+        }
+        Returns: {
+          assessment: string
+          containment_status: string
+          created_at: string
+          created_by: string
+          data_conditions: string[]
+          data_description: string
+          id: string
+          incident_id: string
+          investigation_notes: string
+          resource_name: string
+          updated_at: string
+          updated_by: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "incident_affected_systems"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_incident: {
         Args: {
           _description?: string
@@ -209,6 +293,37 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "incident_members"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      update_incident_affected_system: {
+        Args: {
+          _assessment: string
+          _containment_status: string
+          _data_conditions: string[]
+          _data_description: string
+          _id: string
+          _investigation_notes: string
+          _resource_name: string
+        }
+        Returns: {
+          assessment: string
+          containment_status: string
+          created_at: string
+          created_by: string
+          data_conditions: string[]
+          data_description: string
+          id: string
+          incident_id: string
+          investigation_notes: string
+          resource_name: string
+          updated_at: string
+          updated_by: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "incident_affected_systems"
           isOneToOne: true
           isSetofReturn: false
         }
