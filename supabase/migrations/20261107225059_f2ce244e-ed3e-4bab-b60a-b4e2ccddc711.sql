@@ -1,0 +1,2 @@
+REVOKE ALL ON public.incident_invitations FROM PUBLIC, anon, authenticated, service_role;
+GRANT SELECT (id, incident_id, role, issuer_id, expires_at, redeemed_at, redeemed_by, created_at, updated_at) ON public.incident_invitations TO authenticated;
