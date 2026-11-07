@@ -36,6 +36,8 @@ type Recorded = { rec: Rec };
 const createIncident = incidentFns.createIncident as unknown as Recorded;
 const listIncidents = incidentFns.listIncidents as unknown as Recorded;
 const getIncident = incidentFns.getIncident as unknown as Recorded;
+const updateIncident = incidentFns.updateIncident as unknown as Recorded;
+const getMembership = incidentFns.getIncidentMembership as unknown as Recorded;
 
 const UUID = "3f2b8c1e-5a4d-4e6f-9b7a-1c2d3e4f5a6b";
 const ROW = {
@@ -111,6 +113,8 @@ describe("authentication wiring", () => {
     ["createIncident", createIncident, "POST"],
     ["listIncidents", listIncidents, "GET"],
     ["getIncident", getIncident, "GET"],
+    ["updateIncident", updateIncident, "POST"],
+    ["getIncidentMembership", getMembership, "GET"],
   ])("%s is protected by requireSupabaseAuth only", (_name, fn, method) => {
     expect(fn.rec.middleware).toEqual([REQUIRE_AUTH]);
     expect(fn.rec.opts).toEqual({ method });
@@ -248,5 +252,41 @@ describe("getIncident", () => {
     const err = await run(getIncident, { id: UUID }, client).catch((e: Error) => e);
     expect((err as Error).message).toBe("The incident could not be loaded. Please try again.");
     expect((err as Error).message).not.toMatch(/relation|secret/);
+  });
+});
+
+describe("incident editing boundary", () => {
+  const input = { id: UUID, title: "  Updated title  ", description: "Updated description", severity: "High", stage: "Recovery" };
+  it("uses the exact existing update RPC signature and maps its persisted row", async () => {
+    const { client, result } = await run(updateIncident, input);
+    expect(client.calls.rpc).toEqual([["update_incident_details", { _incident_id: UUID, _title: "Updated title", _description: "Updated description", _severity: "High", _response_stage: "Recovery" }]]);
+    expect(result).toEqual(RECORD);
+  });
+  it("rejects browser-supplied role or user identity before updating", async () => {
+    const client = fakeClient();
+    await expect(run(updateIncident, { ...input, role: "commander" }, client)).rejects.toThrow();
+    await expect(run(updateIncident, { ...input, userId: "other-user" }, client)).rejects.toThrow();
+    expect(client.calls.rpc).toHaveLength(0);
+  });
+  it("preserves database refusal after membership is revoked or changed", async () => {
+    const client = fakeClient();
+    client.state.rpc = { data: null, error: { code: "42501" } };
+    await expect(run(updateIncident, input, client)).rejects.toThrow("You do not have permission");
+  });
+  it("reads membership only for the verified caller, never a supplied user ID", async () => {
+    const client = fakeClient();
+    client.state.one = { data: { role: "responder" }, error: null };
+    expect((await run(getMembership, { id: UUID }, client)).result).toBe("responder");
+    expect(client.calls.from).toEqual([["incident_members"]]);
+    expect(client.calls.select).toEqual([["role"]]);
+    expect(client.calls.eq).toEqual([["incident_id", UUID], ["user_id", "caller-id"]]);
+    await expect(run(getMembership, { id: UUID, userId: "other-user" }, client)).rejects.toThrow();
+  });
+  it("returns no membership for a nonmember and fails closed on read errors", async () => {
+    const client = fakeClient();
+    client.state.one = { data: null, error: null };
+    expect((await run(getMembership, { id: UUID }, client)).result).toBeNull();
+    client.state.one = { data: null, error: DB_ERROR };
+    await expect(run(getMembership, { id: UUID }, client)).rejects.toThrow("membership could not be checked");
   });
 });
