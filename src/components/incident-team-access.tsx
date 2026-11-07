@@ -6,6 +6,7 @@ import { Copy, Link2, Trash2, Users } from "lucide-react";
 import { changeIncidentMember, issueIncidentInvitation, listIncidentMembers, removeIncidentMember } from "@/lib/incident-access.functions";
 import { inviteRoleSchema, memberRoleSchema } from "@/lib/incident-access-models";
 import { incidentKeys, incidentMembershipOptions } from "@/lib/incident-queries";
+import { invitationOrigin, invitationUrl } from "@/lib/invitation-url";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Label } from "./ui/label";
@@ -58,7 +59,7 @@ export function IncidentTeamPanel({ id, userId }: { id: string; userId: string }
       </li>;
     })}</ul>
     {commander && <section className="space-y-3"><h2 className="text-lg font-medium">Invite someone</h2><p className="text-sm text-muted-foreground">Share a one-use link with someone who already has a Bastion account. It expires in 24 hours.</p>
-      <div className="flex flex-wrap items-end gap-3"><div className="space-y-2"><Label htmlFor="invited-role">Access level</Label><Select value={role} onValueChange={(value) => setRole(inviteRoleSchema.parse(value))}><SelectTrigger id="invited-role" className="w-40"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="responder">Responder</SelectItem><SelectItem value="viewer">Viewer</SelectItem></SelectContent></Select></div><Button disabled={mutation.isPending} onClick={() => { void run(async () => { const result = await issue({ data: { id, role } }); setLink({ url: `${window.location.origin}/invite#invite=${result.token}`, expiresAt: result.expiresAt }); setCopied(false); }); }}><Link2 className="size-4" />Generate invitation link</Button></div>
+      <div className="flex flex-wrap items-end gap-3"><div className="space-y-2"><Label htmlFor="invited-role">Access level</Label><Select value={role} onValueChange={(value) => setRole(inviteRoleSchema.parse(value))}><SelectTrigger id="invited-role" className="w-40"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="responder">Responder</SelectItem><SelectItem value="viewer">Viewer</SelectItem></SelectContent></Select></div><Button disabled={mutation.isPending} onClick={() => { void run(async () => { const origin = invitationOrigin(window.location.origin); const result = await issue({ data: { id, role } }); setLink({ url: invitationUrl(origin, result.token), expiresAt: result.expiresAt }); setCopied(false); }); }}><Link2 className="size-4" />Generate invitation link</Button></div>
       {link && <div className="space-y-2"><Label htmlFor="invitation-link">Invitation link</Label><div className="flex gap-2"><Input id="invitation-link" readOnly value={link.url} /><Button variant="outline" size="icon" aria-label="Copy invitation link" title="Copy invitation link" onClick={() => { void navigator.clipboard.writeText(link.url).then(() => setCopied(true)).catch(() => setError("Copy failed. Select and copy the link instead.")); }}><Copy className="size-4" /></Button></div><p className="text-xs text-muted-foreground">{copied ? "Copied · " : ""}Expires {new Date(link.expiresAt).toLocaleString()}</p></div>}
     </section>}
     {!commander && <p className="text-sm text-muted-foreground">Only commanders can invite people or change access.</p>}
