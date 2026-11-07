@@ -10,6 +10,7 @@ vi.mock("@/components/app-shell", () => ({ AppShell: ({ children }: { children: 
 vi.mock("@tanstack/react-router", () => ({ Link: ({ children }: { children: ReactNode }) => <a>{children}</a> }));
 vi.mock("@/components/edit-incident-action", () => ({ EditIncidentAction: () => null }));
 vi.mock("@/components/incident-team-access", () => ({ IncidentTeamAccess: () => null }));
+vi.mock("@/components/real-affected-systems", () => ({ RealAffectedSystems: () => <button disabled>Add system</button> }));
 afterEach(cleanup);
 const incident = { id: "3f2b8c1e-5a4d-4e6f-9b7a-1c2d3e4f5a6b", title: "Real incident", summary: "Recorded description", severity: "High" as const, stage: "Recovery" as const, declaredAt: "2026-11-07T22:00:00Z", lastUpdate: "2026-11-07T22:00:00Z" };
 
