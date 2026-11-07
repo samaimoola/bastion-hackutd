@@ -16,7 +16,7 @@ const severities: Severity[] = ["Critical", "High", "Medium", "Low"];
 const sysStatuses: SystemStatus[] = ["Encrypted", "Isolated", "Under review", "Restored", "Unaffected"];
 const taskStatuses: TaskStatus[] = ["Open", "In progress", "Blocked", "Done"];
 
-export const Route = createFileRoute("/incidents/$id")({
+export const Route = createFileRoute("/_authenticated/incidents/$id")({
   head: () => ({
     meta: [
       { title: "Incident workspace — Bastion" },

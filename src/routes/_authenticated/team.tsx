@@ -12,7 +12,7 @@ import { useDemo, type Role } from "@/lib/demo-store";
 
 const roles: Role[] = ["Incident Commander", "Responder", "Communications", "Legal", "Observer"];
 
-export const Route = createFileRoute("/team")({
+export const Route = createFileRoute("/_authenticated/team")({
   head: () => ({
     meta: [
       { title: "Team administration — Bastion" },

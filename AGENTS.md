@@ -31,3 +31,4 @@ use the editor.
 
 ## Project rules
 - All demo data and mutations live in src/lib/demo-store.tsx (React context, in-memory) so the upcoming backend can replace one module.
+- App screens live under src/routes/_authenticated/ (client-only Supabase session gate redirecting to /login); demo role labels are display-only, never authorization.

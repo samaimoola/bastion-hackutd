@@ -1,11 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { DemoBanner, Wordmark } from "@/components/app-shell";
 import { CitySkyline } from "@/components/city-skyline";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useDemo } from "@/lib/demo-store";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -22,14 +23,27 @@ export const Route = createFileRoute("/login")({
 });
 
 function Login() {
-  const { signIn, members } = useDemo();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const submit = (e: React.FormEvent) => {
+  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => { if (data.user) navigate({ to: "/", replace: true }); });
+  }, [navigate]);
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (signIn(email)) navigate({ to: "/" });
-    else setError("No active demo account with that email.");
+    setLoading(true); setError("");
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      if (error) {
+        setError(error.message === "Invalid login credentials" ? "Email or password is incorrect." : error.message);
+        return;
+      }
+      navigate({ to: "/", replace: true });
+    } catch {
+      setError("Could not reach the sign-in service. Check your connection and try again.");
+    } finally { setLoading(false); }
   };
   return (
     <div className="sky relative min-h-screen overflow-hidden">
@@ -44,29 +58,21 @@ function Login() {
         </div>
         <div className="panel fade-in p-8">
           <h2 className="text-2xl font-medium">Sign in</h2>
-          <p className="mt-2 text-sm text-muted-foreground">Demo sign-in only. No password is checked and nothing is sent to a server. Real authentication comes next.</p>
+          <p className="mt-2 text-sm text-muted-foreground">Use the account your administrator created for you. There is no public sign-up.</p>
           <form onSubmit={submit} className="mt-6 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Work email</Label>
-              <Input id="email" type="email" required className="h-11" value={email} onChange={(e) => { setEmail(e.target.value); setError(""); }} />
-              {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
+              <Input id="email" type="email" required className="h-11" autoComplete="email" disabled={loading} value={email} onChange={(e) => { setEmail(e.target.value); setError(""); }} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="pw">Password</Label>
-              <Input id="pw" type="password" className="h-11" placeholder="Not checked in demo mode" />
+              <Input id="pw" type="password" required autoComplete="current-password" className="h-11" disabled={loading} value={password} onChange={(e) => { setPassword(e.target.value); setError(""); }} />
             </div>
-            <Button type="submit" className="h-11 w-full text-base">Sign in</Button>
+            {error && <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">{error}</p>}
+            <Button type="submit" className="h-11 w-full text-base" disabled={loading}>
+              {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden /> Signing in…</> : "Sign in"}
+            </Button>
           </form>
-          <div className="mt-6 border-t border-border pt-4">
-            <p className="eyebrow">Demo accounts</p>
-            <div className="mt-2 flex flex-col gap-1.5">
-              {members.filter((m) => m.active).slice(0, 3).map((m) => (
-                <button key={m.id} type="button" onClick={() => setEmail(m.email)} className="rounded text-left text-sm text-primary hover:underline">
-                  <span className="font-mono text-xs">{m.email}</span> <span className="text-muted-foreground">· {m.role}</span>
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     </div>
