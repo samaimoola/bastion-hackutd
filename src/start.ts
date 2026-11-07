@@ -27,10 +27,10 @@ const csrfMiddleware = createCsrfMiddleware({
 
 // requestMiddleware runs on every request; functionMiddleware only on server functions, where
 // client sendContext is unvalidated input. Append to these arrays, never replace them.
-// Enabling Lovable Cloud adds functionMiddleware: [attachSupabaseAuth], the bearer token that
-// requireSupabaseAuth server functions need. Add it by hand only if Lovable Cloud or a
-// user-managed Supabase project is connected, no middleware here sets Authorization, and the
-// project did not intentionally replace it.
+// attachSupabaseAuth (src/integrations/supabase/auth-attacher.ts) sends the Supabase session's
+// access token as a Bearer header, which requireSupabaseAuth server functions need. It is the only
+// token forwarder registered here. The 401 mapping (unauthorizedToResponse) is attached per
+// function in src/lib/auth.functions.ts, not registered here.
 export const startInstance = createStart(() => ({
   requestMiddleware: [errorMiddleware, csrfMiddleware],
   functionMiddleware: [attachSupabaseAuth],
