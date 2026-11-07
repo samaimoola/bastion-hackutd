@@ -1,6 +1,7 @@
 # Bastion frontend improvements
 
 ## This increment
+- [ ] Add persistent member-scoped incident communications with protected posting, trusted authors/times, live updates and account/membership cleanup; run focused checks.
 - [x] Fix invitation address selection to use the public runtime origin or confirmed canonical published address from preview; preserve fragment credentials and existing invitation protections, with focused URL regression checks.
 - [x] Add persistent real affected systems with assessment, multiple data conditions, containment, notes and trusted actors/times; member-scoped reads, protected writes and Realtime updates.
 - [ ] Verify signed-in affected-system create/edit → reload and two-session Realtime delivery/isolation, including revoked membership; blocked by unavailable external Supabase browser sessions. Concurrent write/revocation locking remains unverified.
