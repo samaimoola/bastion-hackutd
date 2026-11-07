@@ -7,6 +7,7 @@ import {
   INCIDENT_COLUMNS,
   NOT_FOUND_MESSAGE,
   toIncidentRecord,
+  updateIncidentInputSchema,
 } from "./incident-models";
 
 // All three functions run as the signed-in user: requireSupabaseAuth verifies the session and
@@ -58,5 +59,29 @@ export const getIncident = createServerFn({ method: "GET" })
       .maybeSingle();
     if (error) throw incidentFailure(error, "load");
     if (!row) throw new Error(NOT_FOUND_MESSAGE);
+    return toIncidentRecord(row);
+  });
+
+/** Read only the verified caller's membership, with the user's RLS-scoped client. */
+export const getIncidentMembership = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(getIncidentInputSchema)
+  .handler(async ({ data, context }) => {
+    const { data: member, error } = await context.supabase.from("incident_members")
+      .select("role").eq("incident_id", data.id).eq("user_id", context.userId).maybeSingle();
+    if (error) throw incidentFailure(error, "membership");
+    return member?.role ?? null;
+  });
+
+/** The existing RPC rechecks membership atomically; UI roles never authorize writes. */
+export const updateIncident = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(updateIncidentInputSchema)
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase.rpc("update_incident_details", {
+      _incident_id: data.id, _title: data.title, _description: data.description,
+      _severity: data.severity, _response_stage: data.stage,
+    });
+    if (error || !row) throw incidentFailure(error ?? {}, "update");
     return toIncidentRecord(row);
   });

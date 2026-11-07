@@ -1,6 +1,8 @@
 # Bastion frontend improvements
 
 ## This increment
+- [x] Connect real incident editing to the existing update RPC, read verified caller membership, refresh identity-scoped caches, and test editing permissions and submissions.
+- [ ] Verify signed-in editing and reload in the browser as commander, responder and viewer; blocked by external unmanaged Supabase session.
 - [x] Make the real-list New Incident header action prominent at laptop and smaller widths, add the first-incident entry point, and reuse the existing creation dialog and backend function.
 - [x] Connect real incident list, creation, ID loading and refresh through existing functions; separate demo content, disable unconnected actions, isolate account caches, and run focused checks.
 - [ ] Verify signed-in real incident creation → workspace → reload → list, inaccessible IDs and account switching in the browser; blocked by external unmanaged Supabase session (tools cannot supply a signed-in session).
