@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { AppShell } from "@/components/app-shell";
+import { AppShell, PageHeader } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,10 +45,11 @@ function Team() {
 
   return (
     <AppShell>
-      <h1 className="text-2xl font-semibold">Team administration</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Changes are local to this tab and are not saved.</p>
-      <Card className="mt-6">
-        <CardHeader><CardTitle className="text-base">Add member</CardTitle></CardHeader>
+      <PageHeader eyebrow="Administration" title="Response team">
+        <p className="mt-2 text-sm text-muted-foreground">Changes are local to this tab and are not saved.</p>
+      </PageHeader>
+      <Card className="panel border-border">
+        <CardHeader><CardTitle className="font-display text-lg font-medium">Add member</CardTitle></CardHeader>
         <CardContent>
           <form onSubmit={add} className="flex flex-wrap gap-3">
             <Input aria-label="Name" placeholder="Full name" required value={name} onChange={(e) => setName(e.target.value)} className="w-48" />
@@ -61,7 +62,7 @@ function Team() {
           </form>
         </CardContent>
       </Card>
-      <Card className="mt-6">
+      <Card className="panel mt-6 overflow-hidden border-border">
         <Table>
           <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Role</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
           <TableBody>

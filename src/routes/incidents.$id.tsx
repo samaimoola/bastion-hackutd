@@ -1,8 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { ChevronLeft } from "lucide-react";
-import { AppShell, SeverityBadge, SystemBadge, TaskBadge } from "@/components/app-shell";
-import { Badge } from "@/components/ui/badge";
+import { AppShell, StageBadge, SeverityBadge, SystemBadge, TaskBadge } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -48,22 +47,22 @@ function Workspace() {
       <div className="mt-3 flex flex-wrap items-center gap-3">
         <span className="font-mono text-xs text-muted-foreground">{i.id}</span>
         <SeverityBadge s={i.severity} />
-        <Badge variant="info">Stage: {i.stage}</Badge>
+        <StageBadge s={i.stage} />
       </div>
-      <h1 className="mt-2 text-2xl font-semibold">{i.title}</h1>
-      <Tabs defaultValue="overview" className="mt-6">
-        <TabsList>
+      <h1 className="mt-3 text-3xl font-medium">{i.title}</h1>
+      <Tabs defaultValue="overview" className="mt-8">
+        <TabsList className="h-auto w-full justify-start gap-6 rounded-none border-b border-border bg-transparent p-0 [&>button]:rounded-none [&>button]:border-b-2 [&>button]:border-transparent [&>button]:bg-transparent [&>button]:px-0.5 [&>button]:pb-3 [&>button]:pt-1 [&>button]:text-sm [&>button]:text-muted-foreground [&>button]:shadow-none [&>button:hover]:text-foreground [&>button[data-state=active]]:border-primary [&>button[data-state=active]]:bg-transparent [&>button[data-state=active]]:text-foreground [&>button[data-state=active]]:shadow-none">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="systems">Affected Systems</TabsTrigger>
           <TabsTrigger value="tasks">Tasks</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
           <TabsTrigger value="chat">Team Chat</TabsTrigger>
         </TabsList>
-        <TabsContent value="overview"><OverviewTab /></TabsContent>
-        <TabsContent value="systems"><SystemsTab /></TabsContent>
-        <TabsContent value="tasks"><TasksTab /></TabsContent>
-        <TabsContent value="timeline"><TimelineTab /></TabsContent>
-        <TabsContent value="chat"><ChatTab /></TabsContent>
+        <TabsContent className="fade-in mt-6" value="overview"><OverviewTab /></TabsContent>
+        <TabsContent className="fade-in mt-6" value="systems"><SystemsTab /></TabsContent>
+        <TabsContent className="fade-in mt-6" value="tasks"><TasksTab /></TabsContent>
+        <TabsContent className="fade-in mt-6" value="timeline"><TimelineTab /></TabsContent>
+        <TabsContent className="fade-in mt-6" value="chat"><ChatTab /></TabsContent>
       </Tabs>
     </AppShell>
   );
@@ -74,12 +73,12 @@ function OverviewTab() {
   const [action, setAction] = useState("");
   return (
     <div className="grid gap-6 md:grid-cols-3">
-      <Card className="md:col-span-2">
-        <CardHeader><CardTitle className="text-base">Summary</CardTitle></CardHeader>
+      <Card className="panel border-border md:col-span-2">
+        <CardHeader><CardTitle className="font-display text-lg font-medium">Summary</CardTitle></CardHeader>
         <CardContent className="space-y-6">
           <p className="text-sm leading-relaxed">{i.summary}</p>
           <div>
-            <h3 className="text-sm font-medium text-muted-foreground">Next actions</h3>
+            <h3 className="eyebrow">Next actions</h3>
             <ul className="mt-2 space-y-2">
               {i.nextActions.map((a) => (
                 <li key={a} className="flex items-center justify-between gap-3 rounded-md bg-muted px-3 py-2 text-sm">
@@ -96,8 +95,8 @@ function OverviewTab() {
           </div>
         </CardContent>
       </Card>
-      <Card>
-        <CardHeader><CardTitle className="text-base">Details</CardTitle></CardHeader>
+      <Card className="panel border-border">
+        <CardHeader><CardTitle className="font-display text-lg font-medium">Details</CardTitle></CardHeader>
         <CardContent className="space-y-4 text-sm">
           <div className="space-y-1"><p className="text-muted-foreground">Severity</p><Pick label="Severity" value={i.severity} options={severities} onChange={(v) => updateIncident({ severity: v })} className="w-full" /></div>
           <div className="space-y-1"><p className="text-muted-foreground">Response stage</p><Pick label="Stage" value={i.stage} options={stages} onChange={(v) => updateIncident({ stage: v })} className="w-full" /></div>
@@ -121,7 +120,7 @@ function SystemsTab() {
   const [name, setName] = useState("");
   const [type, setType] = useState("");
   return (
-    <Card>
+    <Card className="panel border-border">
       <Table>
         <TableHeader><TableRow><TableHead>System</TableHead><TableHead>Type</TableHead><TableHead>Owner</TableHead><TableHead>Status</TableHead><TableHead>Notes</TableHead><TableHead>Update</TableHead></TableRow></TableHeader>
         <TableBody>
@@ -151,7 +150,7 @@ function TasksTab() {
   const [title, setTitle] = useState("");
   const [assignee, setAssignee] = useState("m2");
   return (
-    <Card>
+    <Card className="panel border-border">
       <Table>
         <TableHeader><TableRow><TableHead>Task</TableHead><TableHead>Assignee</TableHead><TableHead>Due</TableHead><TableHead>Status</TableHead><TableHead>Update</TableHead></TableRow></TableHeader>
         <TableBody>
@@ -159,7 +158,7 @@ function TasksTab() {
             <TableRow key={t.id}>
               <TableCell className={t.status === "Done" ? "text-muted-foreground line-through" : ""}>{t.title}</TableCell>
               <TableCell>{memberName(t.assigneeId)}</TableCell>
-              <TableCell className="text-xs text-muted-foreground">{fmt(t.due)}</TableCell>
+              <TableCell className="font-mono text-xs text-muted-foreground">{fmt(t.due)}</TableCell>
               <TableCell><TaskBadge s={t.status} /></TableCell>
               <TableCell><Pick label={`Status for ${t.title}`} value={t.status} options={taskStatuses} onChange={(v) => setTaskStatus(t.id, v)} /></TableCell>
             </TableRow>
@@ -182,7 +181,7 @@ function TimelineTab() {
   const { timeline, addEvent } = useDemo();
   const [text, setText] = useState("");
   return (
-    <Card>
+    <Card className="panel border-border">
       <CardContent className="pt-6">
         <form className="mb-6 flex gap-2" onSubmit={(e) => { e.preventDefault(); if (text.trim()) { addEvent(text.trim()); setText(""); } }}>
           <Input placeholder="Log an event" value={text} onChange={(e) => setText(e.target.value)} />
@@ -192,7 +191,7 @@ function TimelineTab() {
           {[...timeline].reverse().map((e) => (
             <li key={e.id}>
               <span className="absolute -left-1.5 mt-1.5 h-3 w-3 rounded-full border-2 border-background bg-primary" aria-hidden />
-              <p className="text-xs text-muted-foreground"><time>{fmt(e.at)}</time> · {e.author}</p>
+              <p className="text-xs text-muted-foreground"><time className="font-mono">{fmt(e.at)}</time> · <span className="font-medium text-foreground/85">{e.author}</span></p>
               <p className="mt-0.5 text-sm">{e.text}</p>
             </li>
           ))}
@@ -207,12 +206,12 @@ function ChatTab() {
   const [text, setText] = useState("");
   const send = () => { if (text.trim()) { sendChat(text.trim()); setText(""); } };
   return (
-    <Card>
+    <Card className="panel border-border">
       <CardContent className="space-y-4 pt-6">
         <div className="space-y-3">
           {chat.map((m) => (
-            <div key={m.id} className="rounded-md bg-muted px-4 py-3">
-              <p className="text-xs text-muted-foreground"><span className="font-medium text-foreground">{memberName(m.authorId)}</span> · {fmt(m.at)}</p>
+            <div key={m.id} className="rounded-lg border border-border bg-muted/60 px-4 py-3">
+              <p className="text-xs text-muted-foreground"><span className="font-medium text-foreground">{memberName(m.authorId)}</span> · <span className="font-mono">{fmt(m.at)}</span></p>
               <p className="mt-1 text-sm">{m.text}</p>
             </div>
           ))}
