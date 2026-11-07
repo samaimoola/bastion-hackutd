@@ -1,6 +1,7 @@
 # Bastion frontend improvements
 
 ## This increment
+- [ ] Add persistent real affected systems with assessment, multiple data conditions, containment, notes and trusted actors/times; member-scoped reads, protected writes and Realtime updates.
 - [x] Add incident-specific team access, commander role/removal controls and 24-hour single-use hash-only invitation RPCs; existing-account acceptance and inherited-grant hardening applied.
 - [x] Simplify workspace wording, center Guide content and balance incident summary/details spacing; chatbot behavior, auth gate and demo separation preserved.
 - [ ] Verify signed-in team management, invitation generation → existing-account sign-in → acceptance → reload, account switching, and Guide/workspace visuals in both themes; blocked by external unmanaged Supabase session. Concurrent two-client redemption remains unverified.
