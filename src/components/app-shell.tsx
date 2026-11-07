@@ -28,8 +28,8 @@ export function Wordmark() {
   );
 }
 
-const navCls = "flex items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-foreground";
-const navActive = { className: "!border-primary/30 !bg-sidebar-accent !text-sidebar-accent-foreground shadow-[inset_3px_0_0_var(--primary)]" };
+const navCls = "flex min-h-11 items-center justify-center gap-2 border-b-2 border-transparent px-3 py-2 text-sm text-muted-foreground hover:border-border hover:text-foreground";
+const navActive = { className: "!border-primary !text-foreground" };
 
 export function AppShell({ children, mode = "demo" }: { children: ReactNode; mode?: "demo" | "live" | "account" }) {
   const navigate = useNavigate();
@@ -47,24 +47,23 @@ export function AppShell({ children, mode = "demo" }: { children: ReactNode; mod
     <div className="sky relative min-h-screen">
       <CitySkyline className="shell-skyline pointer-events-none fixed inset-x-0 bottom-0 h-[35vh] w-full" />
       {mode === "demo" ? <DemoBanner /> : <div className="relative z-10 border-b border-border bg-background/90 px-4 py-1.5 text-center text-xs text-muted-foreground">{mode === "live" ? "Real incident · saved to your account" : "Bastion Guide · saved to your account"}</div>}
-      <div className="relative flex min-h-[calc(100vh-29px)] flex-col md:flex-row">
-        <aside className="flex shrink-0 flex-col border-b border-sidebar-border bg-sidebar px-4 py-3 md:sticky md:top-0 md:h-[calc(100vh-30px)] md:w-56 md:border-b-0 md:border-r md:py-6">
-          <Link to="/" className="px-2" aria-label="Bastion home"><Wordmark /></Link>
-          <p className="eyebrow mt-5 hidden px-3 md:block">Workspace</p>
-          <nav aria-label="Main navigation" className="mt-2 flex gap-1 md:flex-col">
+      <div className="relative flex min-h-[calc(100vh-29px)] flex-col">
+        <header className="border-b border-border bg-transparent">
+          <div className="mx-auto grid w-full max-w-6xl grid-cols-[1fr_auto] items-center gap-x-5 gap-y-3 px-5 py-4 sm:px-8 md:px-10 lg:grid-cols-[auto_1fr_auto] lg:px-12">
+          <Link to="/" aria-label="Bastion home"><Wordmark /></Link>
+          <nav aria-label="Main navigation" className="order-3 col-span-2 grid grid-cols-3 gap-1 lg:order-none lg:col-span-1 lg:flex lg:justify-center">
             <Link to="/" className={navCls} activeProps={navActive} activeOptions={{ exact: true }}><Siren className="h-4 w-4" aria-hidden /> Incidents</Link>
             <Link to="/team" className={navCls} activeProps={navActive}><Users className="h-4 w-4" aria-hidden /> Team</Link>
             <Link to="/guide" className={navCls} activeProps={navActive}><BookOpen className="h-4 w-4" aria-hidden /> AI Guide</Link>
           </nav>
-          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-sidebar-border pt-3 md:mt-auto md:block">
-            <div className="mb-4"><ThemeToggle /></div>
-            <div className="hidden min-w-0 md:block"><p className="px-2 text-xs text-muted-foreground">Signed in as</p>
-            <p className="truncate px-2 font-mono text-xs" title={email ?? ""}>{email ?? "…"}</p></div>
-            <Button size="sm" variant="ghost" className="ml-auto justify-start md:ml-0 md:mt-3 md:w-full" disabled={signingOut} onClick={handleSignOut}>
-              <LogOut className="mr-2 h-4 w-4" /> {signingOut ? "Signing out…" : "Sign out"}
+          <div className="flex items-center justify-end gap-2">
+            <ThemeToggle compact />
+            <Button size="icon" variant="ghost" title={email ? `Sign out (${email})` : "Sign out"} aria-label={signingOut ? "Signing out…" : "Sign out"} disabled={signingOut} onClick={handleSignOut}>
+              <LogOut className="h-4 w-4" aria-hidden />
             </Button>
           </div>
-        </aside>
+          </div>
+        </header>
         <main className="fade-in mx-auto min-w-0 w-full max-w-6xl px-5 py-7 sm:px-8 md:px-10 md:py-10 lg:px-12">{children}</main>
       </div>
     </div>
