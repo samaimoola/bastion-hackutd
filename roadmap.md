@@ -1,6 +1,7 @@
 # Bastion frontend improvements
 
 ## This increment
+- [ ] Research readable light/dark palettes and refine Bastion’s semantic colors; check contrast and appearance.
 - [x] Polish shared presentation and add saved light/dark appearance controls; nine tests passed, and login checked in both themes at desktop, 873px, and 390px widths. Signed-in visual checks remain unavailable with external Supabase.
 - [x] Fix demo provider/context mismatch during hot updates; seven tests passed and the affected signed-in preview renders Active response again.
 - [x] Compact, accessible workspace header and responsive tabs.
