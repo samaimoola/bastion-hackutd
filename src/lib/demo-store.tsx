@@ -1,5 +1,6 @@
 // SYNTHETIC DEMO DATA — temporary in-memory state only. Replaced by the authenticated backend next.
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { useContext, useState, type ReactNode } from "react";
+import { DemoContext } from "@/lib/demo-context";
 import { timelineInputSchema, type TimelineInput, type TimelineEntry } from "@/lib/workspace-models";
 
 export type Severity = "Critical" | "High" | "Medium" | "Low";
@@ -79,7 +80,7 @@ const chat: ChatMessage[] = [
   { id: "c3", at: "2026-11-07T18:52:00Z", authorId: "m4", text: "Staff notice draft ready for review in 30 min." },
 ];
 
-interface Store {
+export interface Store {
   incident: Incident;
   updateIncident: (p: Partial<Incident>) => void;
   members: Member[];
@@ -97,8 +98,6 @@ interface Store {
   sendChat: (text: string) => void;
   memberName: (id: string) => string;
 }
-
-const Ctx = createContext<Store | null>(null);
 
 export function DemoProvider({ children }: { children: ReactNode }) {
   const [inc, setInc] = useState(incident);
@@ -150,11 +149,11 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     sendChat: (text) => setMsgs((m) => [...m, { id: uid(), at: now(), authorId: "m1", text }]),
     memberName,
   };
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+  return <DemoContext.Provider value={value}>{children}</DemoContext.Provider>;
 }
 
 export function useDemo() {
-  const c = useContext(Ctx);
+  const c = useContext(DemoContext);
   if (!c) throw new Error("useDemo must be used inside DemoProvider");
   return c;
 }

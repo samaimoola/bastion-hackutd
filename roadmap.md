@@ -1,6 +1,7 @@
 # Bastion frontend improvements
 
 ## This increment
+- [x] Fix demo provider/context mismatch during hot updates; seven tests passed and the affected signed-in preview renders Active response again.
 - [x] Compact, accessible workspace header and responsive tabs.
 - [x] Typed frontend service boundary; retain explicit in-memory demo mode and existing authentication.
 - [x] Overview with record-derived counts, urgent tasks, latest updates, and action shortcuts.
