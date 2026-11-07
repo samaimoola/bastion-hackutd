@@ -31,7 +31,7 @@ export function Wordmark() {
 const navCls = "flex items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-foreground";
 const navActive = { className: "!border-primary/30 !bg-sidebar-accent !text-sidebar-accent-foreground shadow-[inset_3px_0_0_var(--primary)]" };
 
-export function AppShell({ children, mode = "demo" }: { children: ReactNode; mode?: "demo" | "live" }) {
+export function AppShell({ children, mode = "demo" }: { children: ReactNode; mode?: "demo" | "live" | "account" }) {
   const navigate = useNavigate();
   const [email, setEmail] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState(false);
@@ -46,7 +46,7 @@ export function AppShell({ children, mode = "demo" }: { children: ReactNode; mod
   return (
     <div className="sky relative min-h-screen">
       <CitySkyline className="shell-skyline pointer-events-none fixed inset-x-0 bottom-0 h-[35vh] w-full" />
-      {mode === "demo" ? <DemoBanner /> : <div className="relative z-10 border-b border-border bg-background/90 px-4 py-1.5 text-center text-xs text-muted-foreground">Real incident records · Supabase · other workspace sections not connected yet</div>}
+      {mode === "demo" ? <DemoBanner /> : <div className="relative z-10 border-b border-border bg-background/90 px-4 py-1.5 text-center text-xs text-muted-foreground">{mode === "live" ? "Real incident · saved to your account" : "Bastion Guide · saved to your account"}</div>}
       <div className="relative flex min-h-[calc(100vh-29px)] flex-col md:flex-row">
         <aside className="flex shrink-0 flex-col border-b border-sidebar-border bg-sidebar px-4 py-3 md:sticky md:top-0 md:h-[calc(100vh-30px)] md:w-56 md:border-b-0 md:border-r md:py-6">
           <Link to="/" className="px-2" aria-label="Bastion home"><Wordmark /></Link>
@@ -56,16 +56,16 @@ export function AppShell({ children, mode = "demo" }: { children: ReactNode; mod
             <Link to="/team" className={navCls} activeProps={navActive}><Users className="h-4 w-4" aria-hidden /> Team</Link>
             <Link to="/guide" className={navCls} activeProps={navActive}><BookOpen className="h-4 w-4" aria-hidden /> AI Guide</Link>
           </nav>
-          <div className="mt-3 border-t border-sidebar-border pt-3 md:mt-auto">
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-sidebar-border pt-3 md:mt-auto md:block">
             <div className="mb-4"><ThemeToggle /></div>
-            <p className="px-2 text-xs text-muted-foreground">Signed in as</p>
-            <p className="truncate px-2 font-mono text-xs" title={email ?? ""}>{email ?? "…"}</p>
-            <Button size="sm" variant="ghost" className="mt-3 w-full justify-start" disabled={signingOut} onClick={handleSignOut}>
+            <div className="hidden min-w-0 md:block"><p className="px-2 text-xs text-muted-foreground">Signed in as</p>
+            <p className="truncate px-2 font-mono text-xs" title={email ?? ""}>{email ?? "…"}</p></div>
+            <Button size="sm" variant="ghost" className="ml-auto justify-start md:ml-0 md:mt-3 md:w-full" disabled={signingOut} onClick={handleSignOut}>
               <LogOut className="mr-2 h-4 w-4" /> {signingOut ? "Signing out…" : "Sign out"}
             </Button>
           </div>
         </aside>
-        <main className="fade-in mx-auto min-w-0 w-full max-w-6xl px-4 py-6 sm:px-6 md:px-8 md:py-9">{children}</main>
+        <main className="fade-in mx-auto min-w-0 w-full max-w-6xl px-5 py-7 sm:px-8 md:px-10 md:py-10 lg:px-12">{children}</main>
       </div>
     </div>
   );

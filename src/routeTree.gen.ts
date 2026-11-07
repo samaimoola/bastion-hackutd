@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as InviteRouteImport } from './routes/invite'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedGuideRouteImport } from './routes/_authenticated/guide'
@@ -19,6 +20,11 @@ import { Route as AuthenticatedIncidentsIdRouteImport } from './routes/_authenti
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InviteRoute = InviteRouteImport.update({
+  id: '/invite',
+  path: '/invite',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -55,6 +61,7 @@ const AuthenticatedIncidentsIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
+  '/invite': typeof InviteRoute
   '/login': typeof LoginRoute
   '/guide': typeof AuthenticatedGuideRoute
   '/team': typeof AuthenticatedTeamRoute
@@ -62,6 +69,7 @@ export interface FileRoutesByFullPath {
   '/incidents/$id': typeof AuthenticatedIncidentsIdRoute
 }
 export interface FileRoutesByTo {
+  '/invite': typeof InviteRoute
   '/login': typeof LoginRoute
   '/guide': typeof AuthenticatedGuideRoute
   '/team': typeof AuthenticatedTeamRoute
@@ -72,6 +80,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/invite': typeof InviteRoute
   '/login': typeof LoginRoute
   '/_authenticated/guide': typeof AuthenticatedGuideRoute
   '/_authenticated/team': typeof AuthenticatedTeamRoute
@@ -82,12 +91,26 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/login' | '/guide' | '/team' | '/api/guide' | '/incidents/$id'
+    | '/'
+    | '/invite'
+    | '/login'
+    | '/guide'
+    | '/team'
+    | '/api/guide'
+    | '/incidents/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/guide' | '/team' | '/api/guide' | '/' | '/incidents/$id'
+  to:
+    | '/invite'
+    | '/login'
+    | '/guide'
+    | '/team'
+    | '/api/guide'
+    | '/'
+    | '/incidents/$id'
   id:
     | '__root__'
     | '/_authenticated'
+    | '/invite'
     | '/login'
     | '/_authenticated/guide'
     | '/_authenticated/team'
@@ -98,6 +121,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  InviteRoute: typeof InviteRoute
   LoginRoute: typeof LoginRoute
   ApiGuideRoute: typeof ApiGuideRoute
 }
@@ -109,6 +133,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invite': {
+      id: '/invite'
+      path: '/invite'
+      fullPath: '/invite'
+      preLoaderRoute: typeof InviteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -175,6 +206,7 @@ const AuthenticatedRouteRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  InviteRoute: InviteRoute,
   LoginRoute: LoginRoute,
   ApiGuideRoute: ApiGuideRoute,
 }

@@ -44,6 +44,53 @@ export type Database = {
         }
         Relationships: []
       }
+      incident_invitations: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          incident_id: string
+          issuer_id: string
+          redeemed_at: string | null
+          redeemed_by: string | null
+          role: Database["public"]["Enums"]["incident_member_role"]
+          token_hash: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          incident_id: string
+          issuer_id: string
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          role: Database["public"]["Enums"]["incident_member_role"]
+          token_hash: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          incident_id?: string
+          issuer_id?: string
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          role?: Database["public"]["Enums"]["incident_member_role"]
+          token_hash?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_invitations_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       incident_members: {
         Row: {
           incident_id: string
@@ -131,6 +178,18 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      issue_incident_invitation: {
+        Args: {
+          _incident_id: string
+          _role: Database["public"]["Enums"]["incident_member_role"]
+          _token_hash: string
+        }
+        Returns: string
+      }
+      redeem_incident_invitation: {
+        Args: { _token_hash: string }
+        Returns: string
       }
       remove_incident_member: {
         Args: { _incident_id: string; _user_id: string }

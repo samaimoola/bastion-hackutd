@@ -53,6 +53,7 @@ describe("Incident database authorization", () => {
     for (const name of readdirSync(folder).sort()) {
       const sql = readFileSync(`${folder}${name}`, "utf8");
       if (sql.includes("REVOKE ALL ON public.incidents, public.incident_members")) await db.exec(sql);
+      if (sql.includes("CREATE TABLE public.incident_invitations")) await db.exec(sql);
     }
   }, 30000);
   beforeEach(async () => {
@@ -158,5 +159,59 @@ describe("Incident database authorization", () => {
       expect((await db.query("SELECT has_table_privilege($1, 'public.incidents', 'TRUNCATE') AS allowed", [role])).rows).toEqual([{ allowed: false }]);
       expect((await db.query("SELECT has_table_privilege($1, 'public.incident_members', 'TRIGGER') AS allowed", [role])).rows).toEqual([{ allowed: false }]);
     }
+  });
+
+  async function invite(role = "responder", hash = "a".repeat(64)) {
+    return protectedQuery("SELECT public.issue_incident_invitation($1, $2, $3)", [incident, role, hash]);
+  }
+  async function redeem(hash = "a".repeat(64)) {
+    return protectedQuery("SELECT public.redeem_incident_invitation($1) AS id", [hash]);
+  }
+  it("grants only the stored incident and responder role once", async () => {
+    await invite();
+    await identity(outsider);
+    expect((await redeem()).rows).toEqual([{ id: incident }]);
+    expect((await db.query("SELECT incident_id, role FROM public.incident_members WHERE user_id=$1", [outsider])).rows).toEqual([{ incident_id: incident, role: "responder" }]);
+    await expect(redeem()).rejects.toThrow("invalid or unavailable");
+  });
+  it("grants viewer access only when the invitation specifies viewer", async () => {
+    await invite("viewer"); await identity(outsider); await redeem();
+    expect((await db.query("SELECT role FROM public.incident_members WHERE user_id=$1", [outsider])).rows).toEqual([{ role: "viewer" }]);
+  });
+  it("denies issuing invitations to responders, viewers and outsiders", async () => {
+    for (const user of [responder, viewer, outsider]) { await identity(user); await expect(invite()).rejects.toThrow("Only commanders"); }
+  });
+  it("rejects commander invitation roles and malformed token hashes", async () => {
+    await expect(invite("commander")).rejects.toThrow("Invalid invitation");
+    await expect(invite("viewer", "weak-token")).rejects.toThrow("Invalid invitation");
+  });
+  it("rejects anonymous redemption and missing session identity", async () => {
+    await invite(); await identity(null, "anon");
+    await expect(redeem()).rejects.toThrow("permission denied");
+    await identity(null); await expect(redeem()).rejects.toThrow("Authentication required");
+  });
+  it("rejects expired tokens without granting membership", async () => {
+    await invite(); await db.exec("RESET ROLE; UPDATE public.incident_invitations SET expires_at=now()-interval '1 second'");
+    await identity(outsider); await expect(redeem()).rejects.toThrow("invalid or unavailable");
+    expect((await db.query("SELECT * FROM public.incidents")).rows).toHaveLength(0);
+  });
+  it.each(["demoted", "removed"])("rejects invitations whose issuer was %s", async (state) => {
+    await invite(); await setMember(responder, "commander");
+    if (state === "demoted") await setMember(commander, "responder");
+    else await protectedQuery("SELECT public.remove_incident_member($1, $2)", [incident, commander]);
+    await identity(outsider); await expect(redeem()).rejects.toThrow("invalid or unavailable");
+  });
+  it("preserves an existing viewer role, consumes the link and prevents self-promotion", async () => {
+    await invite(); await identity(viewer); await redeem();
+    expect((await db.query("SELECT role FROM public.incident_members WHERE user_id=$1", [viewer])).rows).toEqual([{ role: "viewer" }]);
+    await expect(redeem()).rejects.toThrow("invalid or unavailable");
+  });
+  it("hides token hashes even from commanders and denies direct invitation writes", async () => {
+    await invite();
+    await expect(protectedQuery("SELECT token_hash FROM public.incident_invitations")).rejects.toThrow("permission denied");
+    expect((await db.query("SELECT role FROM public.incident_invitations")).rows).toEqual([{ role: "responder" }]);
+    await expect(protectedQuery("UPDATE public.incident_invitations SET role='viewer'")).rejects.toThrow("permission denied");
+    await identity(viewer);
+    expect((await db.query("SELECT role FROM public.incident_invitations")).rows).toHaveLength(0);
   });
 });
