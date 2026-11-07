@@ -55,6 +55,7 @@ describe("Incident database authorization", () => {
       if (sql.includes("REVOKE ALL ON public.incidents, public.incident_members")) await db.exec(sql);
       if (sql.includes("CREATE TABLE public.incident_invitations")) await db.exec(sql);
       if (sql.includes("REVOKE ALL ON public.incident_invitations" ) && !sql.includes("CREATE TABLE public.incident_invitations")) await db.exec(sql);
+      if (sql.includes("CREATE TABLE public.incident_affected_systems")) await db.exec(sql.replace("ALTER PUBLICATION supabase_realtime ADD TABLE public.incident_affected_systems;", ""));
     }
   }, 30000);
   beforeEach(async () => {
@@ -215,5 +216,55 @@ describe("Incident database authorization", () => {
     await expect(protectedQuery("TRUNCATE public.incident_invitations")).rejects.toThrow("permission denied");
     await identity(viewer);
     expect((await db.query("SELECT role FROM public.incident_invitations")).rows).toHaveLength(0);
+  });
+  async function addSystem(conditions = ["encrypted", "exfiltrated"]) {
+    const rows = await protectedQuery("SELECT * FROM public.add_incident_affected_system($1,'File server','Customer files','suspected',$2,'in progress','Under investigation')", [incident, conditions]);
+    return rows.rows[0] as { id: string; incident_id: string; created_by: string; updated_by: string; created_at: Date; updated_at: Date; data_conditions: string[] };
+  }
+  async function editSystem(id: string) {
+    return protectedQuery("SELECT * FROM public.update_incident_affected_system($1,'Updated server','Files','confirmed',ARRAY['unavailable'],'contained','Resolved')", [id]);
+  }
+  it("persists multiple conditions with trusted creator/editor identities and times", async () => {
+    const row = await addSystem();
+    expect(row.created_by).toBe(commander); expect(row.updated_by).toBe(commander);
+    expect(row.data_conditions).toEqual(["encrypted", "exfiltrated"]);
+    await identity(responder); await editSystem(row.id);
+    const changed = (await db.query<{ created_at: Date; updated_at: Date }>("SELECT * FROM public.incident_affected_systems WHERE id=$1", [row.id])).rows[0];
+    expect(changed).toMatchObject({ created_by: commander, updated_by: responder, assessment: "confirmed", containment_status: "contained", resource_name: "Updated server" });
+    expect(changed?.created_at).toEqual(row.created_at);
+    if (!changed) throw new Error("Updated row missing");
+    expect(changed.updated_at.getTime()).toBeGreaterThanOrEqual(row.created_at.getTime());
+  });
+  it.each([commander, responder])("allows adding and editing for authorized writer %s", async (user) => {
+    await identity(user); const row = await addSystem(); await editSystem(row.id);
+    expect((await db.query("SELECT resource_name FROM public.incident_affected_systems")).rows).toEqual([{ resource_name: "Updated server" }]);
+  });
+  it("viewers read but cannot add/edit; nonmembers cannot read or write", async () => {
+    const row = await addSystem();
+    await identity(viewer); expect((await db.query("SELECT id FROM public.incident_affected_systems")).rows).toHaveLength(1);
+    await expect(addSystem()).rejects.toThrow("Only commanders and responders"); await expect(editSystem(row.id)).rejects.toThrow("Only commanders and responders");
+    await identity(outsider); expect((await db.query("SELECT id FROM public.incident_affected_systems")).rows).toHaveLength(0);
+    await expect(editSystem(row.id)).rejects.toThrow("Only commanders and responders");
+  });
+  it("denies anonymous and direct writes, including truncate", async () => {
+    await addSystem(); await expect(protectedQuery("UPDATE public.incident_affected_systems SET resource_name='Bypass'")).rejects.toThrow("permission denied");
+    await expect(protectedQuery("TRUNCATE public.incident_affected_systems")).rejects.toThrow("permission denied");
+    await identity(null, "anon"); await expect(protectedQuery("SELECT * FROM public.incident_affected_systems")).rejects.toThrow("permission denied");
+    await expect(addSystem()).rejects.toThrow("permission denied");
+  });
+  it("rejects moving records to another incident even with write access to both", async () => {
+    const row = await addSystem();
+    const other = (await db.query<{ id: string }>("SELECT (public.create_incident('Other incident')).id")).rows[0]?.id;
+    await db.exec("RESET ROLE");
+    await expect(protectedQuery("UPDATE public.incident_affected_systems SET incident_id=$1 WHERE id=$2", [other, row.id])).rejects.toThrow("immutable");
+  });
+  it("rejects invalid and duplicate conditions without creating a row", async () => {
+    for (const conditions of [[], ["invalid"], ["encrypted", "encrypted"]]) await expect(addSystem(conditions)).rejects.toThrow("Invalid data conditions");
+    expect((await db.query("SELECT id FROM public.incident_affected_systems")).rows).toHaveLength(0);
+  });
+  it("revoked members lose affected-system access and updates", async () => {
+    const row = await addSystem(); await protectedQuery("SELECT public.remove_incident_member($1,$2)", [incident,responder]);
+    await identity(responder); expect((await db.query("SELECT * FROM public.incident_affected_systems")).rows).toHaveLength(0);
+    await expect(editSystem(row.id)).rejects.toThrow("Only commanders and responders");
   });
 });
