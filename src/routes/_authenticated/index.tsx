@@ -4,7 +4,7 @@ import { AppShell, PageHeader, SeverityBadge, StageBadge, SystemBadge, TaskBadge
 import { Button } from "@/components/ui/button";
 import { fmt, useDemo } from "@/lib/demo-store";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
     meta: [
       { title: "Incidents — Bastion" },
