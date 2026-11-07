@@ -1,6 +1,7 @@
 # Bastion frontend improvements
 
 ## This increment
+- [ ] Connect real incident list, creation, ID loading and refresh through existing functions; separate demo content, disable unconnected actions, isolate account caches, and run focused checks.
 - [x] Apply incident database foundation with member-only access, atomic creation, commander-managed membership, and last-commander protection; regenerate types and test permissions. Application screens, authentication, Guide, and demo state unchanged. Two-session concurrency testing remains unavailable because the sandbox PostgreSQL installation cannot initialize; shared parent-row serialization was reviewed.
 - [x] Fix Guide validation so short greetings remain valid after empty or oversized assistant turns; only the new question is submitted and validated against the 12,000-character limit.
 - [x] Add automatic page/tab navigation for explicit guide requests; destination tests pass and preview build is clean. Signed-in end-to-end navigation remains unverified because the external Supabase browser session is unavailable.
