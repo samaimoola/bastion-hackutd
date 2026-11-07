@@ -25,6 +25,9 @@ import {
 import { Reasoning, ReasoningTrigger, ReasoningContent } from "@/components/ai-elements/reasoning";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "@tanstack/react-router";
+import { useWorkspace } from "@/lib/workspace-api";
+import { guideDestination } from "@/lib/guide-navigation";
 
 export function BastionGuide({
   initialMessages,
@@ -34,6 +37,8 @@ export function BastionGuide({
   blockedReason: string | null;
 }) {
   const [draft, setDraft] = useState("");
+  const navigate = useNavigate();
+  const { incident } = useWorkspace();
   const [failure, setFailure] = useState<string | null>(blockedReason);
   const input = useRef<HTMLTextAreaElement>(null);
   const transport = useMemo(
@@ -76,7 +81,17 @@ export function BastionGuide({
     if (!busy) input.current?.focus();
   }, [busy]);
   const submit = async ({ text }: { text: string }) => {
-    if (!text.trim() || busy || blockedReason) return;
+    if (!text.trim() || busy) return;
+    const destination = guideDestination(text);
+    if (destination) {
+      if (destination.page === "workspace") {
+        await navigate({ to: "/incidents/$id", params: { id: incident.id }, search: { tab: destination.tab } });
+      } else {
+        await navigate({ to: destination.page === "team" ? "/team" : "/" });
+      }
+      return;
+    }
+    if (blockedReason) return;
     setFailure(null);
     setDraft("");
     await sendMessage({ text: text.trim() });
@@ -189,7 +204,7 @@ export function BastionGuide({
             onStop={() => {
               void stop();
             }}
-            disabled={Boolean(blockedReason) || (!busy && !draft.trim())}
+            disabled={(!busy && !draft.trim()) || (Boolean(blockedReason) && !guideDestination(draft))}
           />
         </PromptInputFooter>
       </PromptInput>
