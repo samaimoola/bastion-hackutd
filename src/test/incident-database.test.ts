@@ -45,10 +45,10 @@ describe("Incident database authorization", () => {
       GRANT USAGE ON SCHEMA auth TO anon, authenticated;
       INSERT INTO auth.users VALUES ('${commander}'), ('${responder}'), ('${viewer}'), ('${outsider}');
     `);
-    const folder = new URL("../../supabase/migrations/", import.meta.url);
-    const file = readdirSync(folder).find((name) => readFileSync(new URL(name, folder), "utf8").includes("CREATE TABLE public.incidents"));
+    const folder = `${process.cwd()}/supabase/migrations/`;
+    const file = readdirSync(folder).find((name) => readFileSync(`${folder}${name}`, "utf8").includes("CREATE TABLE public.incidents"));
     if (!file) throw new Error("Incident foundation migration is missing");
-    await db.exec(readFileSync(new URL(file, folder), "utf8"));
+    await db.exec(readFileSync(`${folder}${file}`, "utf8"));
   }, 30000);
   beforeEach(async () => {
     await db.exec("BEGIN");
