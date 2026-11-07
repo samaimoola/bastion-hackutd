@@ -1,6 +1,8 @@
 # Bastion frontend improvements
 
 ## This increment
+- [ ] Add a Bastion AI usage guide with one account-saved conversation, protected streaming, and light/dark presentation.
+- [ ] Verify guide history, streaming, errors, and account isolation; report unavailable signed-in checks honestly.
 - [x] Research Apple HIG, Material, NN/g, and WCAG guidance; apply neutral pearl/charcoal surfaces with restrained teal/mint. Login text/button contrast exceeds 4.5:1, input outlines exceed 3:1; both themes pass mobile checks and theme tests. Signed-in visual checks remain unavailable.
 - [x] Polish shared presentation and add saved light/dark appearance controls; nine tests passed, and login checked in both themes at desktop, 873px, and 390px widths. Signed-in visual checks remain unavailable with external Supabase.
 - [x] Fix demo provider/context mismatch during hot updates; seven tests passed and the affected signed-in preview renders Active response again.
