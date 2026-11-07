@@ -1,6 +1,7 @@
 # Bastion frontend improvements
 
 ## This increment
+- [ ] Add trusted atomic incident activity and connect Timeline with member-only reads, live updates, access/cache cleanup and focused checks.
 - [x] Add persistent member-scoped incident communications with protected posting, trusted authors/times, live updates and account/membership cleanup; all 223 tests pass, generated types and preview build verified, signed-out route redirects to login.
 - [ ] Verify signed-in communications sending/reload, two-session live delivery, viewer/nonmember behavior, removal/account-switch cleanup and concurrent send/revocation; blocked by external unmanaged Supabase browser sessions. Database permissions and deterministic revocation are tested in isolated PostgreSQL; protected-send scanner warning is intentional and reviewed, pre-existing security/password warnings remain.
 - [x] Fix invitation address selection to use the public runtime origin or confirmed canonical published address from preview; preserve fragment credentials and existing invitation protections, with focused URL regression checks.
