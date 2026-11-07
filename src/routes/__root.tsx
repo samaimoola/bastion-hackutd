@@ -133,7 +133,7 @@ function RootComponent() {
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
       const nextIdentity = session?.user.id ?? null;
       if (identity.current !== nextIdentity) {
-        clearIncidentCache(queryClient);
+        if (identity.current !== undefined) clearIncidentCache(queryClient);
         identity.current = nextIdentity;
       }
       if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;

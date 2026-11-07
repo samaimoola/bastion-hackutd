@@ -10,7 +10,7 @@ import { Textarea } from "./ui/textarea";
 import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
-export function NewIncidentForm({ userId, onCreated }: { userId: string; onCreated: (incident: IncidentRecord) => Promise<void> }) {
+export function NewIncidentForm({ userId, onCreated, onBusyChange }: { userId: string; onCreated: (incident: IncidentRecord) => Promise<void>; onBusyChange?: (busy: boolean) => void }) {
   const queryClient = useQueryClient();
   const create = useServerFn(createIncident);
   const lock = useRef(false);
@@ -34,15 +34,16 @@ export function NewIncidentForm({ userId, onCreated }: { userId: string; onCreat
     if (!parsed.success) { setValidation(parsed.error.issues[0]?.message ?? "Check the incident details."); return; }
     setValidation(null);
     lock.current = true;
+    onBusyChange?.(true);
     try { await mutation.mutateAsync({ data: parsed.data }); } catch { /* mutation owns the error */ }
-    finally { lock.current = false; }
+    finally { lock.current = false; onBusyChange?.(false); }
   }}>
     <fieldset disabled={mutation.isPending || Boolean(created)} className="space-y-5">
       <div className="space-y-2"><Label htmlFor="incident-title">Title</Label><Input id="incident-title" required maxLength={TITLE_MAX} value={input.title} onChange={(e) => setInput({ ...input, title: e.target.value })} /></div>
       <div className="space-y-2"><Label htmlFor="incident-description">Description</Label><Textarea id="incident-description" rows={4} maxLength={DESCRIPTION_MAX} value={input.description} onChange={(e) => setInput({ ...input, description: e.target.value })} /></div>
       <div className="grid gap-5 sm:grid-cols-2">
-        <div className="space-y-2"><Label htmlFor="incident-severity">Severity</Label><Select value={input.severity} onValueChange={(value) => setInput({ ...input, severity: incidentSeveritySchema.parse(value) })}><SelectTrigger id="incident-severity"><SelectValue /></SelectTrigger><SelectContent>{incidentSeveritySchema.options.map((value) => <SelectItem key={value} value={value}>{value}</SelectItem>)}</SelectContent></Select></div>
-        <div className="space-y-2"><Label htmlFor="incident-stage">Response stage</Label><Select value={input.stage} onValueChange={(value) => setInput({ ...input, stage: incidentStageSchema.parse(value) })}><SelectTrigger id="incident-stage"><SelectValue /></SelectTrigger><SelectContent>{incidentStageSchema.options.map((value) => <SelectItem key={value} value={value}>{value}</SelectItem>)}</SelectContent></Select></div>
+        <div className="space-y-2"><Label htmlFor="incident-severity">Severity</Label><Select value={input.severity ?? "Medium"} onValueChange={(value) => setInput({ ...input, severity: incidentSeveritySchema.parse(value) })}><SelectTrigger id="incident-severity"><SelectValue /></SelectTrigger><SelectContent>{incidentSeveritySchema.options.map((value) => <SelectItem key={value} value={value}>{value}</SelectItem>)}</SelectContent></Select></div>
+        <div className="space-y-2"><Label htmlFor="incident-stage">Response stage</Label><Select value={input.stage ?? "Detection"} onValueChange={(value) => setInput({ ...input, stage: incidentStageSchema.parse(value) })}><SelectTrigger id="incident-stage"><SelectValue /></SelectTrigger><SelectContent>{incidentStageSchema.options.map((value) => <SelectItem key={value} value={value}>{value}</SelectItem>)}</SelectContent></Select></div>
       </div>
     </fieldset>
     {(validation || mutation.isError) && <p role="alert" className="text-sm text-destructive">{validation ?? (mutation.error instanceof Error ? mutation.error.message : "The incident could not be created. Please try again.")}</p>}
