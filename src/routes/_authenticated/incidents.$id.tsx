@@ -13,7 +13,7 @@ import { fmt, type Severity, type Stage, type SystemStatus, type TaskStatus } fr
 import { useWorkspace } from "@/lib/workspace-api";
 import { WorkspaceOverview } from "@/components/workspace-overview";
 import { WorkspaceTimeline } from "@/components/workspace-timeline";
-import { parseWorkspaceTab } from "@/lib/guide-navigation";
+import { parseWorkspaceTab, type WorkspaceTab } from "@/lib/guide-navigation";
 
 const stages: Stage[] = ["Detection", "Containment", "Eradication", "Recovery", "Post-incident"];
 const severities: Severity[] = ["Critical", "High", "Medium", "Low"];
@@ -21,7 +21,7 @@ const sysStatuses: SystemStatus[] = ["Encrypted", "Isolated", "Under review", "R
 const taskStatuses: TaskStatus[] = ["Open", "In progress", "Blocked", "Done"];
 
 export const Route = createFileRoute("/_authenticated/incidents/$id")({
-  validateSearch: (search: Record<string, unknown>) => ({ tab: parseWorkspaceTab(search['tab']) }),
+  validateSearch: (search: Record<string, unknown>): { tab?: WorkspaceTab } => ({ tab: parseWorkspaceTab(search['tab']) }),
   head: () => ({
     meta: [
       { title: "Incident workspace — Bastion" },
@@ -47,7 +47,8 @@ function Pick<T extends string>({ value, options, onChange, label, className = "
 function Workspace() {
   const { incident: i, memberName, connection } = useWorkspace();
   const { id } = Route.useParams();
-  const { tab } = Route.useSearch();
+  const search = Route.useSearch();
+  const tab = search.tab ?? "overview";
   const navigate = Route.useNavigate();
   const setTab = (value: string) => { void navigate({ search: { tab: parseWorkspaceTab(value) }, replace: true }); };
   const [updateOpen, setUpdateOpen] = useState(false);
