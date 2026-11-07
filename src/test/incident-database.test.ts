@@ -232,7 +232,8 @@ describe("Incident database authorization", () => {
     const changed = (await db.query<{ created_at: Date; updated_at: Date }>("SELECT * FROM public.incident_affected_systems WHERE id=$1", [row.id])).rows[0];
     expect(changed).toMatchObject({ created_by: commander, updated_by: responder, assessment: "confirmed", containment_status: "contained", resource_name: "Updated server" });
     expect(changed?.created_at).toEqual(row.created_at);
-    expect(new Date(String(changed?.updated_at)).getTime()).toBeGreaterThanOrEqual(new Date(row.created_at).getTime());
+    if (!changed) throw new Error("Updated row missing");
+    expect(changed.updated_at.getTime()).toBeGreaterThanOrEqual(row.created_at.getTime());
   });
   it.each([commander, responder])("allows adding and editing for authorized writer %s", async (user) => {
     await identity(user); const row = await addSystem(); await editSystem(row.id);
