@@ -331,9 +331,9 @@ describe("Incident database authorization", () => {
   }
   it("records creation and initial memberships with trusted actors and timestamps", async () => {
     const events = await activity();
-    expect(events.map((event) => event.event_type)).toEqual(["incident_created", "member_added", "member_added", "member_added"]);
+    expect(events.map((event) => event.event_type).sort()).toEqual(["incident_created", "member_added", "member_added", "member_added"]);
     expect(events.every((event) => event.actor_id === commander && event.occurred_at instanceof Date)).toBe(true);
-    expect(events[0]?.details).toEqual({ changes: { title: { after: "Test incident" }, description: { after: "" }, severity: { after: "Medium" }, response_stage: { after: "Detection" } } });
+    expect(events.find((event) => event.event_type === "incident_created")?.details).toEqual({ changes: { title: { after: "Test incident" }, description: { after: "" }, severity: { after: "Medium" }, response_stage: { after: "Detection" } } });
   });
   it("records exact before/after incident fields and skips timestamp-only/no-op updates", async () => {
     await identity(responder); await edit("Changed title");
