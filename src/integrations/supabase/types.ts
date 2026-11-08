@@ -153,6 +153,82 @@ export type Database = {
           },
         ]
       }
+      incident_containment_models: {
+        Row: {
+          created_at: string
+          incident_id: string
+          model: Json
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          created_at?: string
+          incident_id: string
+          model: Json
+          updated_at?: string
+          updated_by: string
+        }
+        Update: {
+          created_at?: string
+          incident_id?: string
+          model?: Json
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_containment_models_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: true
+            referencedRelation: "incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incident_containment_plans: {
+        Row: {
+          author_name: string | null
+          created_at: string
+          created_by: string
+          id: string
+          incident_id: string
+          isolated_system_id: string
+          model_snapshot: Json
+          results: Json
+          title: string
+        }
+        Insert: {
+          author_name?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          incident_id: string
+          isolated_system_id: string
+          model_snapshot: Json
+          results: Json
+          title: string
+        }
+        Update: {
+          author_name?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          incident_id?: string
+          isolated_system_id?: string
+          model_snapshot?: Json
+          results?: Json
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_containment_plans_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       incident_invitations: {
         Row: {
           created_at: string
@@ -372,6 +448,46 @@ export type Database = {
       remove_incident_member: {
         Args: { _incident_id: string; _user_id: string }
         Returns: undefined
+      }
+      save_containment_model: {
+        Args: { _incident_id: string; _model: Json }
+        Returns: {
+          created_at: string
+          incident_id: string
+          model: Json
+          updated_at: string
+          updated_by: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "incident_containment_models"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      save_containment_plan: {
+        Args: {
+          _incident_id: string
+          _isolated_system_id: string
+          _title: string
+        }
+        Returns: {
+          author_name: string | null
+          created_at: string
+          created_by: string
+          id: string
+          incident_id: string
+          isolated_system_id: string
+          model_snapshot: Json
+          results: Json
+          title: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "incident_containment_plans"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       send_incident_message: {
         Args: { _body: string; _incident_id: string; _request_id: string }
