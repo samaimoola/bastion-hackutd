@@ -107,7 +107,7 @@ export const demoModel: ContainmentModel = {
   systems: Object.keys(demoNames),
   spread: [{ from: d(1), to: d(3) }, { from: d(1), to: d(4) }, { from: d(2), to: d(4) }, { from: d(4), to: d(5) }, { from: d(4), to: d(6) }, { from: d(3), to: d(6) }],
   dependencies: [{ from: d(5), to: d(4) }, { from: d(2), to: d(4) }, { from: d(5), to: d(3) }],
-  starts: [d(1)],
+  starts: [d(1), d(2)],
   critical: [d(5), d(6)],
 };
 /** Two candidate actions with different tradeoffs: isolating the laptop vs. the domain controller. */
