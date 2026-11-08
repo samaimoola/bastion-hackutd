@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { SimpleHint } from "./simple-mode";
+import { emptyNextStep } from "@/lib/plain-language";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,7 +41,7 @@ export function RealTimeline({ incidentId, userId }: { incidentId: string; userI
   return <section className="mx-auto max-w-4xl py-6">
     <header className="mb-6 flex flex-wrap items-start justify-between gap-4"><div><h2 className="text-xl font-medium">Timeline</h2><p className="mt-2 text-sm text-muted-foreground">{live}</p></div><Button variant="outline" disabled={activity.isFetching} onClick={() => { void membership.refetch(); void activity.refetch(); }}><RefreshCw className="size-4" />Refresh</Button></header>
     {beganAt && <p className="mb-6 border-l-2 border-border pl-4 text-sm text-muted-foreground">Activity recording began {time(beganAt)}. Earlier changes were not recorded.</p>}
-    {activity.isPending ? <p role="status">Loading timeline…</p> : activity.isError ? <p role="alert" className="text-destructive">{activity.error.message}</p> : rows.length === 0 ? <div className="border-y border-border py-10"><h3 className="text-lg font-medium">No activity recorded yet</h3><p className="mt-3 text-sm text-muted-foreground">New incident changes will appear here.</p></div> : <>
+    {activity.isPending ? <p role="status">Loading timeline…</p> : activity.isError ? <p role="alert" className="text-destructive">{activity.error.message}</p> : rows.length === 0 ? <div className="border-y border-border py-10"><h3 className="text-lg font-medium">No activity recorded yet</h3><p className="mt-3 text-sm text-muted-foreground">New incident changes will appear here.</p><SimpleHint className="mt-2">{emptyNextStep.timeline}</SimpleHint></div> : <>
       <ol aria-label="Incident activity" className="divide-y divide-border border-y border-border">{rows.map((event) => {
         const changes = activityChanges(event);
         return <li key={event.id} className="py-5"><h3 className="break-words text-base font-medium">{activitySummary(event)}</h3><div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground"><span className="break-words">{activityActor(event)}{event.actor_id === userId ? " · You" : ""}</span><time dateTime={event.occurred_at} className="font-mono">{time(event.occurred_at)}</time></div>{changes.length > 0 && <dl className="mt-4 space-y-3 text-sm">{changes.map((change) => <div key={change.field}><dt className="font-medium">{activityField(change.field)}</dt><dd className="mt-1 whitespace-pre-wrap break-words leading-6 text-muted-foreground">{"before" in change ? `${activityValue(change.before)} → ${activityValue(change.after)}` : activityValue(change.after)}</dd></div>)}</dl>}<details className="mt-3 text-xs text-muted-foreground"><summary className="cursor-pointer">Activity references</summary><div className="mt-2 space-y-1 break-all font-mono"><p>Actor: {event.actor_id}</p><p>Record: {event.entity_id}</p></div></details></li>;

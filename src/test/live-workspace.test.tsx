@@ -7,7 +7,8 @@ import type { WorkspaceTab } from "@/lib/guide-navigation";
 const { demo } = vi.hoisted(() => ({ demo: vi.fn(() => { throw new Error("Real workspace must not read demo records"); }) }));
 vi.mock("@/lib/demo-store", () => ({ useDemo: demo }));
 vi.mock("@/components/app-shell", () => ({ AppShell: ({ children }: { children: ReactNode }) => <main>{children}</main>, SeverityBadge: () => null, StageBadge: () => null }));
-vi.mock("@tanstack/react-router", () => ({ Link: ({ children }: { children: ReactNode }) => <a>{children}</a> }));
+vi.mock("@tanstack/react-router", () => ({ Link: ({ children, search }: { children: ReactNode; search?: { tab?: string } }) => <a data-tab={search?.tab}>{children}</a> }));
+vi.mock("@/components/incident-access-summary", () => ({ YourAccess: () => <p>Your access</p> }));
 vi.mock("@/components/edit-incident-action", () => ({ EditIncidentAction: () => null }));
 vi.mock("@/components/incident-team-access", () => ({ IncidentTeamAccess: () => null }));
 vi.mock("@/components/real-affected-systems", () => ({ RealAffectedSystems: () => <button disabled>Add system</button> }));
@@ -16,12 +17,27 @@ vi.mock("@/components/real-timeline", () => ({ RealTimeline: () => <button disab
 afterEach(cleanup);
 const incident = { id: "3f2b8c1e-5a4d-4e6f-9b7a-1c2d3e4f5a6b", title: "Real incident", summary: "Recorded description", severity: "High" as const, stage: "Recovery" as const, declaredAt: "2026-11-07T22:00:00Z", lastUpdate: "2026-11-07T22:00:00Z" };
 
-it.each<WorkspaceTab>(["overview", "systems", "tasks", "timeline", "chat"])("real %s section never consumes demo data and its unsupported writes are disabled", (tab) => {
+it.each<WorkspaceTab>(["systems", "tasks", "timeline", "chat"])("real %s section never consumes demo data and its unsupported writes are disabled", (tab) => {
   const write = vi.fn();
   render(<LiveIncidentWorkspace incident={incident} userId="user-a" tab={tab} setTab={write} />);
   const controls = screen.getByRole("tabpanel").querySelectorAll("button");
   expect(controls.length).toBeGreaterThan(0);
   for (const control of controls) { expect(control).toBeDisabled(); fireEvent.click(control); }
+  expect(write).not.toHaveBeenCalled();
+  expect(demo).not.toHaveBeenCalled();
+});
+it("real overview explains the incident and offers only connected sections, with no write buttons", () => {
+  const write = vi.fn();
+  render(<LiveIncidentWorkspace incident={incident} userId="user-a" tab="overview" setTab={write} />);
+  const panel = screen.getByRole("tabpanel");
+  expect(panel).toHaveTextContent("What happened");
+  expect(panel).toHaveTextContent("Recorded description");
+  expect(panel).toHaveTextContent("Stage: Recovery.");
+  expect(panel.querySelectorAll("button")).toHaveLength(0);
+  const tabs = [...panel.querySelectorAll("a[data-tab]")].map((a) => a.getAttribute("data-tab"));
+  expect(tabs).toEqual(["systems", "timeline", "chat", "lab"]);
+  expect(tabs).not.toContain("tasks"); // unconnected for real incidents; still reachable from the tab list
+  expect(panel).toHaveTextContent("Tasks and next steps are not available for real incidents yet.");
   expect(write).not.toHaveBeenCalled();
   expect(demo).not.toHaveBeenCalled();
 });

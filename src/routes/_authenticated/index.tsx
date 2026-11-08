@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { SimpleHint } from "@/components/simple-mode";
 import { useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowRight, Plus } from "lucide-react";
@@ -40,6 +41,7 @@ function Overview() {
         <p className="eyebrow">Incidents</p>
         <h1 className="mt-2 text-3xl font-medium text-foreground">Active response</h1>
         <p className="mt-2 text-sm text-muted-foreground">{incidents.length} accessible {incidents.length === 1 ? "incident" : "incidents"}</p>
+        <SimpleHint className="mt-2 max-w-xl">These are the incidents your account can open. Select one to see its workspace, or select New Incident to start one. You become its commander.</SimpleHint>
       </div>
       <Button size="lg" className="w-full shrink-0 sm:w-auto" onClick={() => setOpen(true)}><Plus className="size-4" aria-hidden />New Incident</Button>
     </header>

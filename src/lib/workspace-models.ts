@@ -30,3 +30,12 @@ export function eventInput(text: string, type: EntryType, utcTime: string) {
   const date = new Date(`${utcTime}:00Z`);
   return timelineInputSchema.parse({ text, type, at: Number.isNaN(date.getTime()) ? "" : date.toISOString() });
 }
+
+/** Plain-language meaning of each response stage. Definitions only, never recommended next steps. */
+export const stageMeaning: Record<string, string> = {
+  Detection: "The team is confirming what happened and how far it reaches.",
+  Containment: "The team is working to stop the problem from spreading.",
+  Eradication: "The team is removing the cause, such as malware or a compromised account.",
+  Recovery: "The team is restoring affected systems and services.",
+  "Post-incident": "The response is wrapping up and the team is reviewing what happened.",
+};

@@ -25,15 +25,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   return <ThemeContext.Provider value={{ theme, toggleTheme }}>{children}</ThemeContext.Provider>;
 }
 
-export function ThemeToggle({ compact = false }: { compact?: boolean }) {
+export function ThemeToggle({ compact = false, labeled = false }: { compact?: boolean; labeled?: boolean }) {
   const context = useContext(ThemeContext);
   if (!context) return null;
   const { theme, toggleTheme } = context;
   const label = `Switch to ${theme === "dark" ? "light" : "dark"} theme`;
   return (
-    <Button variant="outline" size={compact ? "icon" : "sm"} onClick={toggleTheme} aria-label={label} title={label} className={compact ? "shrink-0 bg-background/90" : "w-full justify-start"}>
+    <Button variant="outline" size={compact && !labeled ? "icon" : "sm"} onClick={toggleTheme} aria-label={label} title={label} className={compact ? "shrink-0 bg-background/90" : "w-full justify-start"}>
       {theme === "dark" ? <Sun aria-hidden /> : <Moon aria-hidden />}
-      {!compact && <span>{theme === "dark" ? "Light appearance" : "Dark appearance"}</span>}
+      {(!compact || labeled) && <span>{theme === "dark" ? "Light appearance" : "Dark appearance"}</span>}
     </Button>
   );
 }

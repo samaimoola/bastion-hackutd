@@ -1,4 +1,6 @@
 import { useRef, useState } from "react";
+import { SimpleHint } from "./simple-mode";
+import { terms } from "@/lib/plain-language";
 import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
@@ -49,6 +51,7 @@ export function IncidentTeamPanel({ id, userId }: { id: string; userId: string }
   const lastCommander = members.data.filter((m) => m.role === "commander").length === 1;
   return <div className="space-y-6">
     <p className="text-sm text-muted-foreground">Commander: manages access · Responder: edits incident · Viewer: read only</p>
+    <SimpleHint>{terms.commander} {terms.responder} A viewer is {terms.viewer.charAt(0).toLowerCase()}{terms.viewer.slice(1)}</SimpleHint>
     <ul className="divide-y divide-border border-y border-border">{members.data.map((member) => {
       const protectLast = member.role === "commander" && lastCommander;
       return <li key={member.user_id} className="flex flex-wrap items-center justify-between gap-3 py-4">
@@ -62,7 +65,7 @@ export function IncidentTeamPanel({ id, userId }: { id: string; userId: string }
       <div className="flex flex-wrap items-end gap-3"><div className="space-y-2"><Label htmlFor="invited-role">Access level</Label><Select value={role} onValueChange={(value) => setRole(inviteRoleSchema.parse(value))}><SelectTrigger id="invited-role" className="w-40"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="responder">Responder</SelectItem><SelectItem value="viewer">Viewer</SelectItem></SelectContent></Select></div><Button disabled={mutation.isPending} onClick={() => { void run(async () => { const origin = invitationOrigin(window.location.origin); const result = await issue({ data: { id, role } }); setLink({ url: invitationUrl(origin, result.token), expiresAt: result.expiresAt }); setCopied(false); }); }}><Link2 className="size-4" />Generate invitation link</Button></div>
       {link && <div className="space-y-2"><Label htmlFor="invitation-link">Invitation link</Label><div className="flex gap-2"><Input id="invitation-link" readOnly value={link.url} /><Button variant="outline" size="icon" aria-label="Copy invitation link" title="Copy invitation link" onClick={() => { void navigator.clipboard.writeText(link.url).then(() => setCopied(true)).catch(() => setError("Copy failed. Select and copy the link instead.")); }}><Copy className="size-4" /></Button></div><p className="text-xs text-muted-foreground">{copied ? "Copied · " : ""}Expires {new Date(link.expiresAt).toLocaleString()}</p></div>}
     </section>}
-    {!commander && <p className="text-sm text-muted-foreground">Only commanders can invite people or change access.</p>}
+    {!commander && <div><p className="text-sm text-muted-foreground">Only commanders can invite people or change access.</p><SimpleHint className="mt-1">If someone needs access or a different role, ask a commander listed above.</SimpleHint></div>}
     {mutation.isPending && <p role="status" className="text-sm">Saving…</p>}
     {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
   </div>;
