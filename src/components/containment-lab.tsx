@@ -133,7 +133,7 @@ function LabBody({ model, setModel, options, names, isolated, setIsolated, edita
     <ModelEditor model={model} setModel={setModel} options={options} names={names} editable={editable} />
     <div className="max-w-md space-y-2">
       <Label htmlFor="isolate-pick">System to hypothetically isolate</Label>
-      <Select value={isolated || undefined} onValueChange={setIsolated} disabled={model.systems.length === 0}>
+      <Select value={isolated} onValueChange={setIsolated} disabled={model.systems.length === 0}>
         <SelectTrigger id="isolate-pick"><SelectValue placeholder="Choose one modeled system" /></SelectTrigger>
         <SelectContent>{model.systems.map((id) => <SelectItem key={id} value={id}>{names(id)}</SelectItem>)}</SelectContent>
       </Select>
@@ -174,8 +174,8 @@ function ModelEditor({ model, setModel, options, names, editable }: { model: Con
       </dl>
       {editable && <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_1fr]">
         <Select value={kind} onValueChange={(v) => setKind(v as "spread" | "dependencies")}><SelectTrigger aria-label="Connection type" className="sm:col-span-2"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="spread">Spread / access link</SelectItem><SelectItem value="dependencies">Business dependency</SelectItem></SelectContent></Select>
-        <Select value={from || undefined} onValueChange={setFrom}><SelectTrigger aria-label="From system"><SelectValue placeholder="From (A)" /></SelectTrigger><SelectContent>{model.systems.map((id) => <SelectItem key={id} value={id}>{names(id)}</SelectItem>)}</SelectContent></Select>
-        <Select value={to || undefined} onValueChange={setTo}><SelectTrigger aria-label="To system"><SelectValue placeholder="To (B)" /></SelectTrigger><SelectContent>{model.systems.map((id) => <SelectItem key={id} value={id}>{names(id)}</SelectItem>)}</SelectContent></Select>
+        <Select value={from} onValueChange={setFrom}><SelectTrigger aria-label="From system"><SelectValue placeholder="From (A)" /></SelectTrigger><SelectContent>{model.systems.map((id) => <SelectItem key={id} value={id}>{names(id)}</SelectItem>)}</SelectContent></Select>
+        <Select value={to} onValueChange={setTo}><SelectTrigger aria-label="To system"><SelectValue placeholder="To (B)" /></SelectTrigger><SelectContent>{model.systems.map((id) => <SelectItem key={id} value={id}>{names(id)}</SelectItem>)}</SelectContent></Select>
         <Button variant="secondary" className="sm:col-span-2" disabled={!canAdd} onClick={() => { setModel({ ...model, [kind]: [...model[kind], { from, to }] }); setTo(""); }}><Plus className="size-4" />Add connection</Button>
         {from && to && from === to && <p className="text-xs text-muted-foreground sm:col-span-2">Pick two different systems.</p>}
         {exists && <p className="text-xs text-muted-foreground sm:col-span-2">This connection already exists.</p>}

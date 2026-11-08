@@ -417,7 +417,7 @@ describe("Incident database authorization", () => {
       return { a, b, c, model: { systems: [a, b, c], spread: [{ from: a, to: b }, { from: b, to: c }], dependencies: [{ from: c, to: b }], starts: [a], critical: [c] } };
     }
     const saveModel = (model: unknown, target = incident) => protectedQuery("SELECT (public.save_containment_model($1, $2::jsonb)).incident_id", [target, JSON.stringify(model)]);
-    const savePlan = (isolated: string, title = "Isolate B") => protectedQuery<{ id: string; created_by: string; results: Record<string, unknown> }>("SELECT * FROM public.save_containment_plan($1, $2, $3)", [incident, title, isolated]);
+    const savePlan = (isolated: string, title = "Isolate B") => protectedQuery("SELECT * FROM public.save_containment_plan($1, $2, $3)", [incident, title, isolated]) as Promise<{ rows: { id: string; created_by: string; results: Record<string, unknown> }[] }>;
 
     it("responders save a model and plan; results, author and timeline event come from the database", async () => {
       const { b, c, model } = await labModel();
@@ -461,7 +461,7 @@ describe("Incident database authorization", () => {
     it("rejects systems from another incident, dangling or self links, and isolating unmodeled systems", async () => {
       const { a, b, model } = await labModel();
       const other = (await db.query<{ id: string }>("SELECT (public.create_incident('Other')).id")).rows[0]!.id;
-      const foreign = (await protectedQuery<{ id: string }>("SELECT * FROM public.add_incident_affected_system($1,'X','','suspected',ARRAY['unknown'],'not contained','')", [other])).rows[0]!.id;
+      const foreign = ((await protectedQuery("SELECT * FROM public.add_incident_affected_system($1,'X','','suspected',ARRAY['unknown'],'not contained','')", [other])).rows[0] as { id: string }).id;
       await expect(saveModel({ ...model, systems: [...model.systems, foreign] })).rejects.toThrow("affected systems of this incident");
       await expect(saveModel({ ...model, spread: [{ from: a, to: a }] })).rejects.toThrow("two different modeled systems");
       await expect(saveModel({ ...model, extra: true })).rejects.toThrow("Invalid containment model");
