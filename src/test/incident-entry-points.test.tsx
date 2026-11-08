@@ -33,7 +33,7 @@ describe("Incident list creation entry points", () => {
     render(<QueryClientProvider client={client}><Page /></QueryClientProvider>);
     fireEvent.click(screen.getByRole("button", { name: entry }));
     fireEvent.change(screen.getByLabelText("Title"), { target: { value: "VPN compromise" } });
-    fireEvent.change(screen.getByLabelText("Description"), { target: { value: "Confirmed login anomaly" } });
+    fireEvent.change(screen.getByLabelText(/^Description/), { target: { value: "Confirmed login anomaly" } });
     fireEvent.click(screen.getByRole("button", { name: "Create incident" }));
     await waitFor(() => expect(navigate).toHaveBeenCalledWith({ to: "/incidents/$id", params: { id: record.id } }));
     expect(create).toHaveBeenCalledTimes(1);

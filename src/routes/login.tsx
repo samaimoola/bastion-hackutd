@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { ChevronRight, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DemoBanner, Wordmark } from "@/components/app-shell";
 import { CitySkyline } from "@/components/city-skyline";
@@ -74,6 +74,17 @@ function Login() {
               {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden /> Signing in…</> : "Sign in"}
             </Button>
           </form>
+          {/* Static guidance; mirrors docs/isolation-boundary.md. Sign-in itself is unchanged. */}
+          <details className="group mt-6 border-t border-border pt-4 text-sm">
+            <summary className="flex min-h-11 cursor-pointer items-center gap-2 font-medium [&::-webkit-details-marker]:hidden">
+              <ChevronRight className="size-4 shrink-0 transition-transform group-open:rotate-90" aria-hidden />Access during an outage
+            </summary>
+            <div className="mt-2 space-y-2 text-muted-foreground">
+              <p>Sign-in uses only your Bastion email and password. It does not use your company&rsquo;s single sign-on or VPN, and nothing is sent to your email or phone.</p>
+              <p>You still need internet access to this site and to Bastion&rsquo;s hosting provider. Bastion does not work offline. If company systems may be compromised, use a trusted device on a separate connection, such as a phone hotspot.</p>
+              <p>Your account must be set up in advance. There is no public sign-up and no self-service password reset, so if you cannot sign in, contact your Bastion administrator.</p>
+            </div>
+          </details>
         </div>
       </div>
     </div>

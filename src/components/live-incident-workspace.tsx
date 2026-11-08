@@ -3,7 +3,6 @@ import { SimpleHint } from "./simple-mode";
 import { terms } from "@/lib/plain-language";
 import { ChevronLeft } from "lucide-react";
 import { AppShell, SeverityBadge, StageBadge } from "./app-shell";
-import { Button } from "./ui/button";
 import { Tabs, TabsContent } from "./ui/tabs";
 import type { IncidentRecord } from "@/lib/incident-models";
 import type { WorkspaceTab } from "@/lib/guide-navigation";
@@ -13,6 +12,7 @@ import { YourAccess } from "./incident-access-summary";
 import { RealAffectedSystems } from "./real-affected-systems";
 import { RealCommunications } from "./real-communications";
 import { RealTimeline } from "./real-timeline";
+import { RealTasks } from "./real-tasks";
 import { ContainmentLab } from "./containment-lab";
 import { Disclosure, WorkspaceActionList, WorkspaceTabBar, type WorkspaceAction } from "./workspace-sections";
 import { stageMeaning } from "@/lib/workspace-models";
@@ -21,9 +21,6 @@ import { SimpleIncidentSummary } from "./simple-incident-summary";
 
 const formatTime = (value: string) => new Date(value).toLocaleString("en-GB", { timeZone: "UTC", dateStyle: "medium", timeStyle: "short" });
 
-function UnconnectedSection({ title, action }: { title: string; action: string }) {
-  return <section className="py-6"><h2 className="text-xl font-medium">{title}</h2><p className="mt-3 text-sm text-muted-foreground">{title} are not connected for real incidents yet. No records are available here.</p><Button disabled variant="outline" className="mt-5" aria-describedby={`unconnected-${action.replaceAll(" ", "-")}`}>{action}</Button><p id={`unconnected-${action.replaceAll(" ", "-")}`} className="mt-2 text-xs text-muted-foreground">Unavailable until this section is connected.</p></section>;
-}
 
 // Only connected sections are offered as actions. Tasks stay reachable from the tab list.
 const liveActions: WorkspaceAction[] = [
@@ -64,7 +61,7 @@ function IncidentReference({ incident: i }: { incident: IncidentRecord }) {
     <dl className="space-y-3">
       <div><dt className="text-muted-foreground">Created</dt><dd className="mt-0.5">{formatTime(i.declaredAt)} UTC</dd></div>
       <div><dt className="text-muted-foreground">Incident reference</dt><dd className="mt-0.5 break-all font-mono text-xs">{i.id}</dd></div>
-      <div><dt className="text-muted-foreground">Not connected yet</dt><dd className="mt-0.5">Tasks and next steps are not available for real incidents yet.</dd></div>
+      <div><dt className="text-muted-foreground">Not connected yet</dt><dd className="mt-0.5">Next steps are not available for real incidents yet. The Tasks tab says whether shared tasks are set up for this workspace.</dd></div>
     </dl>
   </Disclosure>;
 }
@@ -85,7 +82,7 @@ export function LiveIncidentWorkspace({ incident: i, userId, tab, setTab }: { in
       <WorkspaceTabBar tab={tab} setTab={setTab} mode="live" />
       <TabsContent value="overview" className="mt-8"><LiveOverview incident={i} userId={userId} /></TabsContent>
       <TabsContent value="systems"><RealAffectedSystems key={`${userId}:${i.id}`} incidentId={i.id} userId={userId} /></TabsContent>
-      <TabsContent value="tasks"><UnconnectedSection title="Tasks" action="Add task" /></TabsContent>
+      <TabsContent value="tasks"><RealTasks key={`${userId}:${i.id}`} incidentId={i.id} userId={userId} /></TabsContent>
       <TabsContent value="timeline"><RealTimeline key={`${userId}:${i.id}`} incidentId={i.id} userId={userId} /></TabsContent>
       <TabsContent value="chat"><RealCommunications key={`${userId}:${i.id}`} incidentId={i.id} userId={userId} /></TabsContent>
       <TabsContent value="lab"><ContainmentLab key={`${userId}:${i.id}`} incidentId={i.id} userId={userId} /></TabsContent>

@@ -34,8 +34,13 @@ const workspaceLive: Record<WorkspaceTab, Omit<PageHelp, "key">> = {
   },
   tasks: {
     title: "Tasks",
-    purpose: "Tasks are not available for real incidents yet.",
-    steps: ["Open the demo workspace from the Incidents page to see how tasks will work."],
+    purpose: "Shared tasks for this incident: what needs doing, who is on it, and its status.",
+    steps: [
+      "Select Add task and enter a title. Details and an assignee are optional.",
+      "Change a task\u2019s status between To do, In progress and Done.",
+      "If the tab says shared tasks are not set up yet, an administrator needs to install a database update.",
+    ],
+    note: "Commanders and responders can add and change tasks. Viewers can read them. Only people with access to the incident can be assigned.",
   },
   timeline: {
     title: "Timeline",

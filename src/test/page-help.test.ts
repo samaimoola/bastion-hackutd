@@ -14,10 +14,11 @@ describe("Help with this page (static)", () => {
     expect(pageHelp("/somewhere-else", {}).key).toBe("other");
   });
 
-  it("tells real-incident users that tasks are not connected, and demo users how to use them", () => {
-    expect(pageHelp(`/incidents/${REAL}`, { tab: "tasks" }).purpose).toBe(
-      "Tasks are not available for real incidents yet.",
-    );
+  it("explains shared real-incident tasks (and when they are not set up), and demo tasks separately", () => {
+    const live = pageHelp(`/incidents/${REAL}`, { tab: "tasks" });
+    expect(live.purpose).toBe("Shared tasks for this incident: what needs doing, who is on it, and its status.");
+    expect(live.steps.join(" ")).toMatch(/not set up yet, an administrator needs to install a database update/);
+    expect(live.note).toMatch(/Viewers can read them/);
     expect(pageHelp("/incidents/INC-2026-0412", { tab: "tasks" }).steps).toContain(
       "Select Add task.",
     );
