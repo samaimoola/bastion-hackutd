@@ -21,3 +21,9 @@ export function guideDestination(text: string): GuideDestination | null {
 export function parseWorkspaceTab(value: unknown): WorkspaceTab {
   return workspaceTabs.find((tab) => tab === value) ?? "overview";
 }
+
+/** Where an explicit Guide navigation command goes. Workspace tabs open the incident on screen, or the demo. */
+export function guideNavigation(destination: GuideDestination, currentIncidentId: string | null, demoIncidentId: string) {
+  if (destination.page === "workspace") return { to: "/incidents/$id", params: { id: currentIncidentId ?? demoIncidentId }, search: { tab: destination.tab } } as const;
+  return { to: destination.page === "team" ? "/team" : "/dashboard" } as const;
+}

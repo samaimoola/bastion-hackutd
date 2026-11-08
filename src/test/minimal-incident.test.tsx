@@ -17,7 +17,10 @@ vi.mock("@tanstack/react-start", async (orig) => ({
 }));
 import { NewIncidentForm } from "@/components/new-incident-form";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.clearAllMocks();
+});
 const record = {
   id: "3f2b8c1e-5a4d-4e6f-9b7a-1c2d3e4f5a6b",
   title: "Odd VPN logins",
@@ -53,4 +56,35 @@ it("starts an incident with only a title and says which fields are optional or e
     data: { title: "Odd VPN logins", description: "", severity: "Medium", stage: "Detection" },
   });
   expect(onCreated).toHaveBeenCalledWith(record);
+});
+
+it("offers an all-Unknown outline that never overwrites typed text and keeps defaults labeled as estimates", async () => {
+  create.mockResolvedValue(record);
+  render(
+    <QueryClientProvider client={new QueryClient()}>
+      <NewIncidentForm userId="u" onCreated={vi.fn(async () => {})} />
+    </QueryClientProvider>,
+  );
+  const shortcut = screen.getByRole("button", { name: "Start with unknown details" });
+  expect(shortcut).toHaveAccessibleDescription(/Unknown means not checked yet, not ruled out/);
+  fireEvent.click(shortcut);
+  const description = screen.getByLabelText(/^Description/);
+  expect(description).toHaveValue(
+    "Attacker access: Unknown\nObserved impact: Unknown\nAffected communication channels: Unknown\nConfirmed findings: None yet",
+  );
+  expect(shortcut).toBeDisabled(); // cannot replace text that is already there
+  fireEvent.change(description, { target: { value: "Our own notes" } });
+  expect(shortcut).toBeDisabled();
+  expect(screen.getByText(/not a verified assessment/)).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Odd VPN logins" } });
+  fireEvent.click(screen.getByRole("button", { name: "Create incident" }));
+  await waitFor(() => expect(create).toHaveBeenCalledTimes(1));
+  expect(create.mock.calls[0]![0]).toEqual({
+    data: {
+      title: "Odd VPN logins",
+      description: "Our own notes",
+      severity: "Medium",
+      stage: "Detection",
+    },
+  });
 });

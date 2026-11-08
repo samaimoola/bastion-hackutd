@@ -4,7 +4,8 @@ import { followUpPrompt, incidentIdFromPath, pageHelp } from "@/lib/page-help";
 const REAL = "3f2b8c1e-5a4d-4e6f-9b7a-1c2d3e4f5a6b";
 describe("Help with this page (static)", () => {
   it("chooses help from the URL only", () => {
-    expect(pageHelp("/", {}).key).toBe("incidents");
+    expect(pageHelp("/dashboard", {}).key).toBe("incidents");
+    expect(pageHelp("/", {}).key).toBe("welcome"); // public welcome page
     expect(pageHelp("/team", {}).key).toBe("team");
     expect(pageHelp("/guide", {}).key).toBe("guide");
     expect(pageHelp(`/incidents/${REAL}`, {}).key).toBe("live:overview");

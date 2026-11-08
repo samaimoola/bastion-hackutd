@@ -26,7 +26,7 @@ import { Shimmer } from "@/components/ai-elements/shimmer";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "@tanstack/react-router";
 import { useWorkspace } from "@/lib/workspace-api";
-import { guideDestination } from "@/lib/guide-navigation";
+import { guideDestination, guideNavigation } from "@/lib/guide-navigation";
 import { useGuideSession } from "@/lib/guide-session-context";
 
 /** Loads the shared conversation (if needed) and renders the Guide. Used by the page and the panel. */
@@ -70,12 +70,8 @@ function GuideConversation({
     if (!text.trim() || busy) return;
     const destination = guideDestination(text);
     if (destination) {
-      if (destination.page === "workspace") {
-        // Workspace commands open the incident currently on screen, or the demo incident otherwise.
-        await navigate({ to: "/incidents/$id", params: { id: incidentId ?? incident.id }, search: { tab: destination.tab } });
-      } else {
-        await navigate({ to: destination.page === "team" ? "/team" : "/" });
-      }
+      // Workspace commands open the incident currently on screen, or the demo incident otherwise.
+      await navigate(guideNavigation(destination, incidentId, incident.id));
       return;
     }
     if (blockedReason) return;

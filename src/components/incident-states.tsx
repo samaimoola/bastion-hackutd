@@ -9,7 +9,7 @@ export function IncidentLoading() {
 }
 
 export function IncidentNotFound() {
-  return <AppShell mode="live"><h1 className="text-2xl">Incident not found</h1><p className="mt-3 text-sm text-muted-foreground">This incident does not exist or is not accessible to your account.</p><Button asChild variant="outline" className="mt-6"><Link to="/">All incidents</Link></Button></AppShell>;
+  return <AppShell mode="live"><h1 className="text-2xl">Incident not found</h1><p className="mt-3 text-sm text-muted-foreground">This incident does not exist or is not accessible to your account.</p><Button asChild variant="outline" className="mt-6"><Link to="/dashboard">All incidents</Link></Button></AppShell>;
 }
 
 export function IncidentError({ error, reset }: ErrorComponentProps) {

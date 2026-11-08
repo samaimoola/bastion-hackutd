@@ -71,7 +71,7 @@ export function LiveIncidentWorkspace({ incident: i, userId, tab, setTab }: { in
   // The Simple-mode Summary carries the editor in its "What happened?" entry point; don't repeat it.
   const editInHeader = !(simple && tab === "overview");
   return <AppShell mode="live">
-    <Link to="/" className="inline-flex min-h-11 items-center text-sm text-muted-foreground hover:text-foreground"><ChevronLeft className="size-4" /> All incidents</Link>
+    <Link to="/dashboard" className="inline-flex min-h-11 items-center text-sm text-muted-foreground hover:text-foreground"><ChevronLeft className="size-4" /> All incidents</Link>
     <header className="space-y-3 border-b border-border pb-5">
       <h1 className="break-words text-3xl font-medium">{i.title}</h1>
       <div className="flex flex-wrap items-center gap-2"><SeverityBadge s={i.severity} /><StageBadge s={i.stage} /><span className="text-xs text-muted-foreground">Updated {formatTime(i.lastUpdate)} UTC</span></div>

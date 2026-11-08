@@ -4,6 +4,8 @@ Status: **not deployed.** Nothing in this folder has been applied to the hosted 
 
 `AGENTS.md` reserves schema changes for Lovable ("Do not add or edit `supabase/migrations/`") and forbids editing the generated `src/integrations/supabase/types.ts`. So the SQL lives here, outside `supabase/migrations/`, and the app treats tasks as unavailable until it is installed.
 
+Independent of the signup proposal: either can be applied first (tested together in `src/test/database-proposals-combined.test.ts`). In Simple mode, real-incident Tasks are under "More tools"; before this SQL is installed that tab shows the setup message with no write controls.
+
 ## What the app does today
 - Real incidents: the Tasks tab asks the server for tasks. If the `incident_tasks` table does not exist, it shows "Shared tasks are not set up yet", offers no writes and opens no live subscription. Nothing is stored in the browser.
 - Demo incident (`INC-2026-0412`): unchanged; its practice tasks stay in `src/lib/demo-store.tsx`.

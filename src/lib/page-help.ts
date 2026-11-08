@@ -131,6 +131,15 @@ const pages: Record<string, Omit<PageHelp, "key">> = {
     steps: ["Type a question and press Enter.", "Your conversation is saved to your account."],
     note: "Answers can be wrong. Do not share secrets or confidential incident details.",
   },
+  welcome: {
+    title: "Welcome",
+    purpose: "The public front page. It explains what Bastion is and leads to sign-in.",
+    steps: [
+      "Select Enter dashboard or Sign in.",
+      "No account yet? Select Create an account with an invitation and enter the code your commander shared.",
+    ],
+    note: "Accounts are invitation-only. There is no open sign-up.",
+  },
   other: {
     title: "This page",
     purpose: "No page-specific help is written for this screen yet.",
@@ -148,7 +157,8 @@ export function pageHelp(pathname: string, search: Record<string, unknown>): Pag
       ...(demo ? workspaceDemo : workspaceLive)[tab],
     };
   }
-  if (pathname === "/" || pathname === "") return { key: "incidents", ...pages["incidents"]! };
+  if (pathname === "/dashboard" || pathname === "/dashboard/") return { key: "incidents", ...pages["incidents"]! };
+  if (pathname === "/" || pathname === "") return { key: "welcome", ...pages["welcome"]! };
   if (pathname.startsWith("/team")) return { key: "team", ...pages["team"]! };
   if (pathname.startsWith("/guide")) return { key: "guide", ...pages["guide"]! };
   return { key: "other", ...pages["other"]! };

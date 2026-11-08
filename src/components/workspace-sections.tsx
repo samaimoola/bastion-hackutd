@@ -94,8 +94,9 @@ const tabOrder: Record<"live" | "demo", WorkspaceTab[]> = {
 };
 /** Simple mode: main destinations first, secondary tools under "More tools". */
 const simpleLayout: Record<"live" | "demo", { main: WorkspaceTab[]; more: WorkspaceTab[] }> = {
-  // Real-incident tasks are not connected, so they are not offered (the ?tab=tasks route still works).
-  live: { main: ["overview", "systems", "chat", "timeline"], more: ["lab"] },
+  // Real tasks live under More tools. Until the database proposal is installed, the Tasks tab itself shows
+  // an honest "not set up yet" state with no write controls.
+  live: { main: ["overview", "systems", "chat", "timeline"], more: ["tasks", "lab"] },
   demo: { main: ["overview", "systems", "chat", "timeline"], more: ["tasks", "lab"] },
 };
 
