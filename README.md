@@ -1,54 +1,76 @@
-# Bastion Incident Command
+# Bastion
 
-Build Bastion, a cyber incident-response workspace for a hackathon.
+Bastion is a cyber incident-response workspace. It gives a response team one place to keep the incident record, affected systems, tasks, a timeline, team chat and access control, with an optional guide that explains how to use the app.
 
-Use React, TypeScript, Tailwind, and shadcn/ui. We will connect a separate Supabase backend next. For this first step, build a working interface with clearly labeled synthetic demo data.
+Built for a hackathon with React, TypeScript, Tailwind, shadcn/ui, TanStack Start and Supabase.
 
-Design:
+## What it does
 
-Professional, calm, polished enterprise software.
+- **Incident dashboard:** lists incidents with severity, response stage and last update. Start a real incident with only a title, and fill in the rest later.
+- **Incident workspace:** Overview, Affected Systems, Tasks, Timeline, Team Chat and a Containment Lab.
+- **Containment Lab:** model how systems connect, isolate one, and compare options. Each result comes with a plain-language "Why" explanation.
+- **Team access:** commanders manage roles (commander, responder, viewer) and share one-use incident links with people who already have an account.
+- **Simple mode:** everyday wording, guided summaries, and secondary tools grouped under "More tools".
+- **Bastion Guide:** a floating assistant that answers questions about using the app and can navigate to pages. It only gives guidance and never changes incident records.
+- **Stakeholder update:** a plain-language summary you can copy for non-technical readers.
+- **Light and dark themes.**
 
-Dark navy and charcoal surfaces, readable contrast, restrained accent colors.
+## Real data and demo data
 
-Red reserved for critical incidents and destructive actions.
+- **Real incidents** are stored in Supabase. Access is limited to incident members by database rules, and every server call runs as the signed-in user.
+- **The demo incident** (`INC-2026-0412`, a fictional ransomware case) uses clearly labeled synthetic data. It lives only in memory in `src/lib/demo-store.tsx`, resets on reload, and never touches the database. Demo role labels are display-only and do not grant access.
 
-Clear typography, generous spacing, and compact readable tables.
+## Accounts and access
 
-Status labels must include text, not rely only on color.
+- Sign-in uses individual Supabase Auth accounts with an email and password. Accounts are created in the Supabase dashboard (Authentication → Users → Add user → Create new user).
+- Public sign-up is off. An invitation-only "Create an account" flow is built but stays switched off until its database changes are installed (see below).
+- Incident links (`/invite`) add an existing account to one incident. They are single use, expire after 24 hours, and never grant more than responder or viewer access.
+- There is no MFA and no self-service password reset. Contact your administrator if you cannot sign in.
 
-Avoid decorative terminal animations, oversized charts, and fake security claims.
+## Pending database changes
 
-Screens:
+Schema changes are managed through Lovable, so two features are kept as reviewed SQL proposals in `docs/database-proposals/`. Neither is applied yet, and the app shows an honest "not set up yet" state until it is.
 
-Incident overview with incident title, severity, response stage, commander, last update, and next actions.
+| Proposal | Adds | Docs |
+| --- | --- | --- |
+| `incident-tasks.sql` | Shared, role-checked incident tasks with activity logging | `incident-tasks.md` |
+| `signup-invitations.sql` | Invitation-only account creation (needs a Supabase Auth hook) | `signup-invitations.md` |
 
-Incident workspace with tabs: Overview, Affected Systems, Tasks, Timeline, and Team Chat.
+Each document has the deployment order, verification steps and rollback. Do not enable sign-up in Supabase until the signup steps are complete.
 
-Team administration screen.
+## Dependencies outside Bastion
 
-Login screen.
+Bastion is not independent of outside services. It needs:
 
-Use one fictional ransomware incident with realistic synthetic records. Make buttons and forms work with temporary local state. Clearly distinguish this from the real authenticated backend we will implement next.
+- **Lovable and Cloudflare** to host the app.
+- **Supabase** for authentication, the database and live updates.
+- **The Lovable AI Gateway** for the Guide only. It needs `LOVABLE_API_KEY` on the server.
+- **Working email** for account confirmation, once sign-up is enabled.
 
-Do not add AI, external notifications, billing, file uploads, or complex infrastructure. Build the smallest usable interface first.
-
-This project was built with [Lovable](https://lovable.dev).
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/9ba069c6-8ccc-4ed0-a83b-625dfa770c44).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+There is no offline mode. See `docs/isolation-boundary.md` for what sign-in needs during an outage.
 
 ## Development
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+This project uses [Bun](https://bun.sh).
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
+bun install
+bun --bun run dev      # local dev server
+bunx tsc --noEmit      # type check
+bun run test           # tests (Vitest)
+bun run build          # production build
 ```
+
+Configuration goes in a local `.env` file. Never commit secrets or put them in browser code.
+
+## Project layout
+
+- `src/routes/` holds the pages. Signed-in pages are under `_authenticated/`.
+- `src/lib/*.functions.ts` are authenticated server functions.
+- `src/lib/demo-store.tsx` holds all demo data.
+- `supabase/migrations/` is managed by Lovable. Do not edit it by hand.
+- `docs/` has the isolation notes and database proposals.
+
+## Working with Lovable
+
+This project is connected to [Lovable](https://lovable.dev/projects/9ba069c6-8ccc-4ed0-a83b-625dfa770c44). Commits pushed to the connected branch sync back to the Lovable editor. Avoid rewriting published git history, because that rewrites it on Lovable's side too.
