@@ -1,4 +1,4 @@
-export const workspaceTabs = ["overview", "timeline", "systems", "tasks", "chat"] as const;
+export const workspaceTabs = ["overview", "timeline", "systems", "tasks", "chat", "lab"] as const;
 export type WorkspaceTab = (typeof workspaceTabs)[number];
 export type GuideDestination = { page: "incidents" | "team" } | { page: "workspace"; tab: WorkspaceTab };
 
@@ -11,6 +11,7 @@ export function guideDestination(text: string): GuideDestination | null {
   if (/^(timeline|events?|updates?)$/.test(target)) return { page: "workspace", tab: "timeline" };
   if (/^(affected systems(?: and data)?|systems?|assets?)$/.test(target)) return { page: "workspace", tab: "systems" };
   if (/^(communications?|team chat|chat)$/.test(target)) return { page: "workspace", tab: "chat" };
+  if (/^(containment lab|lab|what-if|simulation)$/.test(target)) return { page: "workspace", tab: "lab" };
   if (/^(overview|workspace|incident workspace|response brief)$/.test(target)) return { page: "workspace", tab: "overview" };
   if (/^(team|team administration|members)$/.test(target)) return { page: "team" };
   if (/^(incidents?|home|dashboard)$/.test(target)) return { page: "incidents" };
