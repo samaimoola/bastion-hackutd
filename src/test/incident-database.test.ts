@@ -58,6 +58,7 @@ describe("Incident database authorization", () => {
       if (sql.includes("REVOKE ALL ON public.incident_invitations" ) && !sql.includes("CREATE TABLE public.incident_invitations")) await db.exec(sql);
       if (sql.includes("CREATE TABLE public.incident_affected_systems")) await db.exec(sql.replace("ALTER PUBLICATION supabase_realtime ADD TABLE public.incident_affected_systems;", ""));
       if (sql.includes("CREATE TABLE public.incident_messages")) await db.exec(sql.replace(/ALTER PUBLICATION supabase_realtime ADD TABLE public\.(incident_messages|incident_members);/g, ""));
+      if (sql.includes("CREATE TABLE public.incident_containment_models")) await db.exec(sql.replace(/ALTER PUBLICATION supabase_realtime ADD TABLE public\.incident_containment_(models|plans);/g, ""));
       if (sql.includes("CREATE TABLE public.incident_activity")) {
         await db.exec(sql.replace("ALTER PUBLICATION supabase_realtime ADD TABLE public.incident_activity;", ""));
         expect((await db.query("SELECT * FROM public.incident_activity")).rows).toHaveLength(0);
@@ -407,5 +408,74 @@ describe("Incident database authorization", () => {
     expect((await db.query("SELECT * FROM public.incident_messages")).rows).toHaveLength(0);
     expect((await db.query("SELECT * FROM public.incident_affected_systems")).rows).toHaveLength(0);
     expect(await activity()).toHaveLength(4);
+  });
+
+  describe("Containment Lab", () => {
+    async function labModel() {
+      await identity(commander);
+      const a = (await addSystem()).id; const b = (await addSystem()).id; const c = (await addSystem()).id;
+      return { a, b, c, model: { systems: [a, b, c], spread: [{ from: a, to: b }, { from: b, to: c }], dependencies: [{ from: c, to: b }], starts: [a], critical: [c] } };
+    }
+    const saveModel = (model: unknown, target = incident) => protectedQuery("SELECT (public.save_containment_model($1, $2::jsonb)).incident_id", [target, JSON.stringify(model)]);
+    const savePlan = (isolated: string, title = "Isolate B") => protectedQuery<{ id: string; created_by: string; results: Record<string, unknown> }>("SELECT * FROM public.save_containment_plan($1, $2, $3)", [incident, title, isolated]);
+
+    it("responders save a model and plan; results, author and timeline event come from the database", async () => {
+      const { b, c, model } = await labModel();
+      await identity(responder); await saveModel(model);
+      const plan = (await savePlan(b)).rows[0]!;
+      expect(plan.created_by).toBe(responder);
+      expect(plan.results).toMatchObject({ newly_unreachable: [c], critical_offline: [c], offline: [b, c].sort() });
+      const events = await activity("containment_plan_saved");
+      expect(events).toHaveLength(1);
+      expect(events[0]).toMatchObject({ actor_id: responder, entity_id: plan.id, details: { plan_id: plan.id, title: "Isolate B", isolated_system_id: b } });
+      await identity(viewer);
+      expect((await db.query("SELECT title FROM public.incident_containment_plans")).rows).toEqual([{ title: "Isolate B" }]);
+    });
+    it("viewers and nonmembers cannot modify models or plans; nonmembers cannot read them", async () => {
+      const { b, model } = await labModel(); await saveModel(model); await savePlan(b);
+      for (const user of [viewer, outsider]) {
+        await identity(user);
+        await expect(saveModel(model)).rejects.toThrow("Only commanders and responders");
+        await expect(savePlan(b)).rejects.toThrow("Only commanders and responders");
+      }
+      expect((await db.query("SELECT * FROM public.incident_containment_models")).rows).toHaveLength(0);
+      expect((await db.query("SELECT * FROM public.incident_containment_plans")).rows).toHaveLength(0);
+      await identity(null, "anon");
+      await expect(protectedQuery("SELECT * FROM public.incident_containment_plans")).rejects.toThrow("permission denied");
+    });
+    it("denies direct writes, edits and deletes of saved plans, including forged results", async () => {
+      const { b, model } = await labModel(); await saveModel(model); await savePlan(b);
+      await expect(protectedQuery("INSERT INTO public.incident_containment_plans(incident_id,title,isolated_system_id,model_snapshot,results,created_by) VALUES($1,'x',$2,'{}','{}',$3)", [incident, b, commander])).rejects.toThrow("permission denied");
+      await expect(protectedQuery("UPDATE public.incident_containment_plans SET results='{}'")).rejects.toThrow("permission denied");
+      await expect(protectedQuery("DELETE FROM public.incident_containment_plans")).rejects.toThrow("permission denied");
+      await expect(protectedQuery("UPDATE public.incident_containment_models SET model='{}'")).rejects.toThrow("permission denied");
+      await expect(protectedQuery("SELECT private.containment_results('{}'::jsonb, $1)", [b])).rejects.toThrow("permission denied");
+    });
+    it("removed members lose read and write access", async () => {
+      const { b, model } = await labModel(); await saveModel(model); await savePlan(b);
+      await protectedQuery("SELECT public.remove_incident_member($1, $2)", [incident, responder]);
+      await identity(responder);
+      expect((await db.query("SELECT * FROM public.incident_containment_plans")).rows).toHaveLength(0);
+      await expect(savePlan(b)).rejects.toThrow("Only commanders and responders");
+    });
+    it("rejects systems from another incident, dangling or self links, and isolating unmodeled systems", async () => {
+      const { a, b, model } = await labModel();
+      const other = (await db.query<{ id: string }>("SELECT (public.create_incident('Other')).id")).rows[0]!.id;
+      const foreign = (await protectedQuery<{ id: string }>("SELECT * FROM public.add_incident_affected_system($1,'X','','suspected',ARRAY['unknown'],'not contained','')", [other])).rows[0]!.id;
+      await expect(saveModel({ ...model, systems: [...model.systems, foreign] })).rejects.toThrow("affected systems of this incident");
+      await expect(saveModel({ ...model, spread: [{ from: a, to: a }] })).rejects.toThrow("two different modeled systems");
+      await expect(saveModel({ ...model, extra: true })).rejects.toThrow("Invalid containment model");
+      await expect(savePlan(b)).rejects.toThrow("Save the containment model first");
+      await saveModel({ ...model, systems: [a, b], spread: [{ from: a, to: b }], dependencies: [], critical: [] });
+      await expect(savePlan(foreign)).rejects.toThrow("must be part of the model");
+    });
+    it("database results match the browser calculation for the synthetic example", async () => {
+      const { simulate, demoModel, demoActions } = await import("@/lib/containment-graph");
+      await db.exec("RESET ROLE");
+      for (const action of demoActions) {
+        const row = (await db.query<{ r: unknown }>("SELECT private.containment_results($1::jsonb, $2) AS r", [JSON.stringify(demoModel), action])).rows[0]!;
+        expect(row.r).toEqual(simulate(demoModel, action));
+      }
+    });
   });
 });
