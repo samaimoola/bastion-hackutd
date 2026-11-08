@@ -1,8 +1,7 @@
-import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport, type UIMessage } from "ai";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Chat, useChat } from "@ai-sdk/react";
+import type { UIMessage } from "ai";
+import { useEffect, useRef } from "react";
 import { Copy } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { BastionEmblem } from "@/components/city-skyline";
 import {
   Conversation,
@@ -28,54 +27,41 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "@tanstack/react-router";
 import { useWorkspace } from "@/lib/workspace-api";
 import { guideDestination } from "@/lib/guide-navigation";
+import { useGuideSession } from "@/lib/guide-session-context";
 
-export function BastionGuide({
-  initialMessages,
+/** Loads the shared conversation (if needed) and renders the Guide. Used by the page and the panel. */
+export function BastionGuide({ variant = "page", incidentId }: { variant?: "page" | "panel"; incidentId?: string | null }) {
+  const session = useGuideSession();
+  const { historyState, loadHistory } = session;
+  useEffect(() => { if (historyState === "idle") loadHistory(); }, [historyState, loadHistory]);
+  if (!session.chat) {
+    return historyState === "error"
+      ? <div role="alert" className="p-4 text-sm"><p>Your guide history could not be loaded.</p><Button variant="outline" className="mt-3" onClick={loadHistory}>Try again</Button></div>
+      : <p role="status" className="p-4 text-sm text-muted-foreground">Loading your conversation…</p>;
+  }
+  return <GuideConversation chat={session.chat} blockedReason={session.blockedReason} draft={session.draft} setDraft={session.setDraft} variant={variant} incidentId={incidentId ?? null} />;
+}
+
+function GuideConversation({
+  chat,
   blockedReason,
+  draft,
+  setDraft,
+  variant,
+  incidentId,
 }: {
-  initialMessages: UIMessage[];
+  chat: Chat<UIMessage>;
   blockedReason: string | null;
+  draft: string;
+  setDraft: (value: string) => void;
+  variant: "page" | "panel";
+  incidentId: string | null;
 }) {
-  const [draft, setDraft] = useState("");
   const navigate = useNavigate();
   const { incident } = useWorkspace();
-  const [failure, setFailure] = useState<string | null>(blockedReason);
   const input = useRef<HTMLTextAreaElement>(null);
-  const transport = useMemo(
-    () =>
-      new DefaultChatTransport({
-        api: "/api/guide",
-        headers: async () => {
-          const { data } = await supabase.auth.getSession();
-          return data.session ? { Authorization: `Bearer ${data.session.access_token}` } : {};
-        },
-        prepareSendMessagesRequest: ({ messages, headers }) => ({
-          ...(headers ? { headers } : {}),
-          body: {
-            messages: messages.slice(-1).map((m) => ({
-              id: m.id,
-              role: m.role,
-              parts: m.parts.filter((p) => p.type === "text"),
-            })),
-          },
-        }),
-        fetch: async (url, init) => {
-          const response = await fetch(url, init);
-          if (!response.ok) {
-            const body = await response.json().catch(() => null);
-            throw new Error(body?.message ?? "The guide could not respond. Please try again.");
-          }
-          return response;
-        },
-      }),
-    [],
-  );
-  const { messages, sendMessage, status, stop } = useChat({
-    id: "bastion-guide",
-    messages: initialMessages,
-    transport,
-    onError: (error) => setFailure(error.message),
-  });
+  const { messages, sendMessage, status, stop, error, clearError } = useChat({ chat });
+  const failure = error?.message ?? blockedReason;
   const busy = status === "submitted" || status === "streaming";
   useEffect(() => {
     if (!busy) input.current?.focus();
@@ -85,27 +71,28 @@ export function BastionGuide({
     const destination = guideDestination(text);
     if (destination) {
       if (destination.page === "workspace") {
-        await navigate({ to: "/incidents/$id", params: { id: incident.id }, search: { tab: destination.tab } });
+        // Workspace commands open the incident currently on screen, or the demo incident otherwise.
+        await navigate({ to: "/incidents/$id", params: { id: incidentId ?? incident.id }, search: { tab: destination.tab } });
       } else {
         await navigate({ to: destination.page === "team" ? "/team" : "/" });
       }
       return;
     }
     if (blockedReason) return;
-    setFailure(null);
+    clearError();
     setDraft("");
     await sendMessage({ text: text.trim() });
     input.current?.focus();
   };
   return (
-    <div className="mx-auto flex h-[min(760px,70dvh)] min-h-[420px] w-full max-w-3xl flex-col border-t border-border pt-3">
+    <div className={variant === "page" ? "mx-auto flex h-[min(760px,70dvh)] min-h-[420px] w-full max-w-3xl flex-col border-t border-border pt-3" : "flex h-full min-h-0 w-full flex-col"}>
       <Conversation className="min-h-0 flex-1">
         <ConversationContent className="gap-7 px-0 py-5">
           {messages.length === 0 && (
             <div className="flex flex-col items-center py-8 text-center">
               <BastionEmblem className="mb-4 h-12 w-12" />
-              <h2 className="text-2xl">What do you need help with?</h2>
-              <div className="mt-6 grid w-full max-w-xl gap-3 sm:grid-cols-3">
+              <h2 className={variant === "page" ? "text-2xl" : "text-xl"}>What do you need help with?</h2>
+              <div className={`mt-6 grid w-full max-w-xl gap-3 ${variant === "page" ? "sm:grid-cols-3" : ""}`}>
                 {[
                   "What should I do first?",
                   "How do I update an incident?",
@@ -191,7 +178,7 @@ export function BastionGuide({
       <PromptInput onSubmit={submit} className="shrink-0">
         <PromptInputTextarea
           ref={input}
-          autoFocus
+          autoFocus={variant === "page"}
           aria-label="Ask Bastion Guide"
           placeholder="Ask about using Bastion…"
           value={draft}

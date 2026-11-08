@@ -15,10 +15,10 @@ async function identity(user: string | null, role = "authenticated") {
   await db.query("SELECT set_config('request.jwt.claim.sub', $1, false), set_config('request.jwt.claim.role', $2, false)", [user ?? "", role]);
   await db.exec(`SET ROLE ${role}`);
 }
-async function protectedQuery(sql: string, params: unknown[] = []) {
+async function protectedQuery<T = unknown>(sql: string, params: unknown[] = []) {
   await db.exec("SAVEPOINT operation");
   try {
-    const result = await db.query(sql, params);
+    const result = await db.query<T>(sql, params);
     await db.exec("RELEASE SAVEPOINT operation");
     return result;
   } catch (error) {
@@ -417,14 +417,15 @@ describe("Incident database authorization", () => {
       return { a, b, c, model: { systems: [a, b, c], spread: [{ from: a, to: b }, { from: b, to: c }], dependencies: [{ from: c, to: b }], starts: [a], critical: [c] } };
     }
     const saveModel = (model: unknown, target = incident) => protectedQuery("SELECT (public.save_containment_model($1, $2::jsonb)).incident_id", [target, JSON.stringify(model)]);
-    const savePlan = (isolated: string, title = "Isolate B") => protectedQuery("SELECT * FROM public.save_containment_plan($1, $2, $3)", [incident, title, isolated]) as Promise<{ rows: { id: string; created_by: string; results: Record<string, unknown> }[] }>;
+    const savePlan = (isolated: string, title = "Isolate B") => protectedQuery<{ id: string; created_by: string; results: Record<string, unknown> }>("SELECT * FROM public.save_containment_plan($1, $2, $3)", [incident, title, isolated]);
 
     it("responders save a model and plan; results, author and timeline event come from the database", async () => {
       const { b, c, model } = await labModel();
       await identity(responder); await saveModel(model);
       const plan = (await savePlan(b)).rows[0]!;
       expect(plan.created_by).toBe(responder);
-      expect(plan.results).toMatchObject({ newly_unreachable: [c], critical_offline: [c], offline: [b, c].sort() });
+      // The isolated system itself is no longer reachable either (it was reachable before).
+      expect(plan.results).toMatchObject({ newly_unreachable: [b, c].sort(), critical_offline: [c], offline: [b, c].sort() });
       const events = await activity("containment_plan_saved");
       expect(events).toHaveLength(1);
       expect(events[0]).toMatchObject({ actor_id: responder, entity_id: plan.id, details: { plan_id: plan.id, title: "Isolate B", isolated_system_id: b } });
@@ -461,7 +462,7 @@ describe("Incident database authorization", () => {
     it("rejects systems from another incident, dangling or self links, and isolating unmodeled systems", async () => {
       const { a, b, model } = await labModel();
       const other = (await db.query<{ id: string }>("SELECT (public.create_incident('Other')).id")).rows[0]!.id;
-      const foreign = ((await protectedQuery("SELECT * FROM public.add_incident_affected_system($1,'X','','suspected',ARRAY['unknown'],'not contained','')", [other])).rows[0] as { id: string }).id;
+      const foreign = (await protectedQuery<{ id: string }>("SELECT * FROM public.add_incident_affected_system($1,'X','','suspected',ARRAY['unknown'],'not contained','')", [other])).rows[0]!.id;
       await expect(saveModel({ ...model, systems: [...model.systems, foreign] })).rejects.toThrow("affected systems of this incident");
       await expect(saveModel({ ...model, spread: [{ from: a, to: a }] })).rejects.toThrow("two different modeled systems");
       await expect(saveModel({ ...model, extra: true })).rejects.toThrow("Invalid containment model");

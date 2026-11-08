@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { SimpleHint } from "@/components/simple-mode";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/app-shell";
@@ -47,6 +48,7 @@ function Team() {
     <AppShell>
       <PageHeader eyebrow="Administration" title="Response team">
         <p className="mt-2 text-sm text-muted-foreground">Changes are local to this tab and are not saved.</p>
+        <SimpleHint className="mt-2 max-w-xl">This is a practice list. Real incident access is managed under Team access inside each incident.</SimpleHint>
       </PageHeader>
       <Card className="panel border-border">
         <CardHeader><CardTitle className="font-display text-lg font-medium">Add member</CardTitle></CardHeader>

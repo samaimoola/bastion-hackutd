@@ -76,6 +76,85 @@ export function simulate(model: ContainmentModel, isolated: string): Containment
   };
 }
 
+/** Why each offline system is offline: the isolated system itself, or the dependency it relies on. */
+export function offlineReasons(model: ContainmentModel, results: ContainmentResults): { id: string; dependsOn: string | null }[] {
+  const offline = new Set(results.offline);
+  return results.offline.map((id) => {
+    if (id === results.isolated) return { id, dependsOn: null };
+    const via = model.dependencies.filter((e) => e.from === id && offline.has(e.to)).map((e) => e.to).sort();
+    return { id, dependsOn: via[0] ?? null };
+  });
+}
+
+export type Tradeoff = {
+  /** One-sentence overview. Counts other systems separately from the isolated one. */
+  summary: string;
+  /** What happens to the isolated system itself in reachability terms. */
+  isolatedNote: string;
+  /** Previously reachable systems, other than the isolated one, that attack paths no longer reach. */
+  otherUnreachable: string[];
+  otherUnreachableText: string;
+  exposure: string;
+  businessCost: string[];
+  /** Systems (other than the isolated one) that are unavailable yet still reachable. */
+  unavailableButReachable: string[];
+  unavailableButReachableText: string | null;
+};
+const list = (ids: string[], name: (id: string) => string) => ids.map(name).join(", ");
+const count = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+
+/** Explains why availability and reachability can disagree; shown with every simulation. */
+export const MEASURES_NOTE =
+  "Attacker reachability and business-service availability are different measures. Reachability follows attack/access links from the suspected starting points. Availability follows business-dependency links from the isolated system. The model does not assume that a system which stops working also stops being reachable, so a system can be unavailable and still reachable.";
+
+/**
+ * Deterministic plain-language tradeoff for one hypothetical isolation. Wording only: it reads the
+ * existing simulate() results and never recalculates them. Attack-path effects come only from
+ * spread links; business effects come only from dependency links. No likelihoods, costs or
+ * guarantees are stated.
+ */
+export function explainTradeoff(model: ContainmentModel, results: ContainmentResults, name: (id: string) => string): Tradeoff {
+  const iso = name(results.isolated);
+  const critical = new Set(model.critical);
+  const isStart = model.starts.includes(results.isolated);
+  const other = results.newly_unreachable.filter((id) => id !== results.isolated);
+  const otherCritical = other.filter((id) => critical.has(id));
+  const unavailable = results.critical_offline;
+  const stillReachable = results.critical_reachable_after;
+
+  const summary = `In this model, isolating ${iso} stops the modeled attack paths from reaching ${count(other.length, "other system")} and makes ${count(unavailable.length, "business-critical service")} unavailable.${stillReachable.length ? ` ${count(stillReachable.length, "business-critical system")} can still be reached.` : ""}`;
+
+  const isolatedNote = isStart
+    ? `${iso} is a suspected starting point, so it still counts as reachable: isolating it does not undo compromise already there.`
+    : results.newly_unreachable.includes(results.isolated)
+      ? `${iso} itself is no longer reachable from the suspected starting points.`
+      : `${iso} was not reachable from the suspected starting points before isolation.`;
+
+  const otherUnreachableText = other.length === 0
+    ? "No other system that the modeled attack paths reached before is cut off."
+    : `Modeled attack paths no longer reach ${list(other, name)}${otherCritical.length ? `, including business-critical ${list(otherCritical, name)}` : ""}.`;
+
+  const exposure = stillReachable.length
+    ? `Business-critical ${list(stillReachable, name)} can still be reached through ${count(results.remaining_paths.length, "remaining modeled path")}.`
+    : results.remaining_paths.length
+      ? `${count(results.remaining_paths.length, "modeled path")} remain, but none reaches a business-critical system.`
+      : "No modeled attack path remains in use.";
+
+  const businessCost = offlineReasons(model, results).map(({ id, dependsOn }) => {
+    const label = `${name(id)}${critical.has(id) ? " (business-critical)" : ""}`;
+    if (dependsOn === null) return `${label} is unavailable while it is isolated.`;
+    return `${label} becomes unavailable because it depends on ${name(dependsOn)}${dependsOn === results.isolated ? "" : ", which is unavailable"}.`;
+  });
+  if (results.offline.length === 1) businessCost.push(`No modeled business service depends on ${iso}, so nothing else becomes unavailable.`);
+
+  const reachableAfter = new Set(results.reachable_after);
+  const both = results.offline.filter((id) => id !== results.isolated && reachableAfter.has(id));
+  const unavailableButReachableText = both.length === 0 ? null
+    : `${both.map((id) => `${name(id)}${model.starts.includes(id) ? " (a suspected starting point)" : ""}`).join(", ")} ${both.length === 1 ? "is" : "are"} unavailable but still reachable. It stops working because of a business dependency, but the model still counts it as reachable from the attack paths.`;
+
+  return { summary, isolatedNote, otherUnreachable: other, otherUnreachableText, exposure, businessCost, unavailableButReachable: both, unavailableButReachableText };
+}
+
 /** Plain-language gaps in the supplied model. These are limitations, not findings. */
 export function assumptions(model: ContainmentModel): string[] {
   const notes = [

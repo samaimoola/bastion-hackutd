@@ -1,15 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import type { UIMessage } from "ai";
 import { AppShell, PageHeader } from "@/components/app-shell";
 import { BastionGuide } from "@/components/bastion-guide";
-import { guideHistory } from "@/lib/guide.functions";
-
-const historyOptions = queryOptions({
-  queryKey: ["guide-history"],
-  queryFn: () => guideHistory(),
-  staleTime: 0,
-});
+import { SimpleHint } from "@/components/simple-mode";
+import { guideHistoryOptions } from "@/lib/guide-queries";
 export const Route = createFileRoute("/_authenticated/guide")({
   head: () => ({
     meta: [
@@ -24,16 +17,17 @@ export const Route = createFileRoute("/_authenticated/guide")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(historyOptions),
+  // The loader still fetches history first, so direct links behave as before.
+  loader: ({ context }) => context.queryClient.ensureQueryData(guideHistoryOptions),
   component: GuidePage,
 });
 function GuidePage() {
-  const { data } = useSuspenseQuery(historyOptions);
-  const messages = Array.isArray(data.messages) ? (data.messages as unknown as UIMessage[]) : [];
+  // Same conversation as the floating panel: it continues here when the panel is expanded.
   return (
     <AppShell mode="account">
-      <div className="mx-auto max-w-3xl text-center"><PageHeader eyebrow="Your workspace assistant" title="Bastion Guide" /></div>
-      <BastionGuide initialMessages={messages} blockedReason={data.blockedReason} />
+      <div className="mx-auto max-w-3xl text-center"><PageHeader eyebrow="Your workspace assistant" title="Bastion Guide" />
+        <SimpleHint className="-mt-5 mb-6">Ask how to do something in Bastion. Type your question below and press Enter.</SimpleHint></div>
+      <BastionGuide variant="page" />
     </AppShell>
   );
 }

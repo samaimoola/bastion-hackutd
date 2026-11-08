@@ -15,6 +15,7 @@ import { DemoProvider } from "@/lib/demo-store";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
+import { SimpleModeProvider } from "@/components/simple-mode";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
@@ -146,10 +147,11 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <ThemeProvider><DemoProvider>
+      <ThemeProvider><SimpleModeProvider><DemoProvider>
         <Outlet />
-        <Toaster />
-      </DemoProvider></ThemeProvider>
+        {/* Raised so notifications never sit under the floating Guide button. */}
+        <Toaster offset={{ bottom: "5.5rem" }} mobileOffset={{ bottom: "5.5rem" }} />
+      </DemoProvider></SimpleModeProvider></ThemeProvider>
     </QueryClientProvider>
   );
 }

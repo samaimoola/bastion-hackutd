@@ -242,3 +242,13 @@ input, textarea { background-color: var(--background); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* Simple mode: presentation only. Larger text and more comfortable spacing (Tailwind sizes are in rem). */
+html[data-simple] { font-size: 112.5%; }
+html[data-simple] .text-xs { font-size: 0.875rem; line-height: 1.4; }
+html[data-simple] .text-sm { line-height: 1.6; }
+
+/* Floating Guide: wide screens make room for the side panel so the page stays visible beside it. */
+@media (min-width: 1024px) {
+  html[data-guide-open] .guide-dock { padding-right: 26rem; }
+}
