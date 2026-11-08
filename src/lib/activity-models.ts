@@ -35,6 +35,7 @@ export function activitySummary(event: ActivityEvent): string {
     case "member_removed": return `${member} access removed`;
     case "member_role_changed": return `${member} role changed from ${activityValue(metadata["previous_role"])} to ${activityValue(metadata["role"])}`;
     case "message_sent": return "Message sent";
+    case "containment_plan_saved": return `Containment plan proposed: ${activityValue(metadata["title"])} (simulation only)`;
     default: return "Incident activity";
   }
 }
