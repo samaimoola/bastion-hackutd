@@ -34,8 +34,13 @@ const workspaceLive: Record<WorkspaceTab, Omit<PageHelp, "key">> = {
   },
   tasks: {
     title: "Tasks",
-    purpose: "Tasks are not available for real incidents yet.",
-    steps: ["Open the demo workspace from the Incidents page to see how tasks will work."],
+    purpose: "Shared tasks for this incident: what needs doing, who is on it, and its status.",
+    steps: [
+      "Select Add task and enter a title. Details and an assignee are optional.",
+      "Change a task\u2019s status between To do, In progress and Done.",
+      "If the tab says shared tasks are not set up yet, an administrator needs to install a database update.",
+    ],
+    note: "Commanders and responders can add and change tasks. Viewers can read them. Only people with access to the incident can be assigned.",
   },
   timeline: {
     title: "Timeline",
@@ -126,6 +131,15 @@ const pages: Record<string, Omit<PageHelp, "key">> = {
     steps: ["Type a question and press Enter.", "Your conversation is saved to your account."],
     note: "Answers can be wrong. Do not share secrets or confidential incident details.",
   },
+  welcome: {
+    title: "Welcome",
+    purpose: "The public front page. It explains what Bastion is and leads to sign-in.",
+    steps: [
+      "Select Enter dashboard or Sign in.",
+      "No account yet? Select Create an account with an invitation and enter the code your commander shared.",
+    ],
+    note: "Accounts are invitation-only. There is no open sign-up.",
+  },
   other: {
     title: "This page",
     purpose: "No page-specific help is written for this screen yet.",
@@ -143,7 +157,8 @@ export function pageHelp(pathname: string, search: Record<string, unknown>): Pag
       ...(demo ? workspaceDemo : workspaceLive)[tab],
     };
   }
-  if (pathname === "/" || pathname === "") return { key: "incidents", ...pages["incidents"]! };
+  if (pathname === "/dashboard" || pathname === "/dashboard/") return { key: "incidents", ...pages["incidents"]! };
+  if (pathname === "/" || pathname === "") return { key: "welcome", ...pages["welcome"]! };
   if (pathname.startsWith("/team")) return { key: "team", ...pages["team"]! };
   if (pathname.startsWith("/guide")) return { key: "guide", ...pages["guide"]! };
   return { key: "other", ...pages["other"]! };

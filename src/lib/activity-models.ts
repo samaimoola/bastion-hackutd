@@ -4,7 +4,8 @@ export type ActivityEvent = Database["public"]["Tables"]["incident_activity"]["R
 export const activityCursor = z.object({ time: z.string().datetime({ offset: true }), id: z.string().uuid() }).strict();
 export const activityInput = z.object({ incidentId: z.string().uuid(), before: activityCursor.optional() }).strict();
 export type ActivityChange = { field: string; before?: unknown; after?: unknown };
-const labels: Record<string, string> = { title: "Title", description: "Description", severity: "Severity", response_stage: "Response stage", resource_name: "System name", data_description: "Data involved", assessment: "Assessment", data_conditions: "Data conditions", containment_status: "Containment", investigation_notes: "Investigation notes" };
+const labels: Record<string, string> = { title: "Title", description: "Description", severity: "Severity", response_stage: "Response stage", resource_name: "System name", data_description: "Data involved", assessment: "Assessment", data_conditions: "Data conditions", containment_status: "Containment", investigation_notes: "Investigation notes", details: "Task details", assignee_id: "Assignee", status: "Status" };
+const taskStatus: Record<string, string> = { todo: "To do", in_progress: "In progress", done: "Done" };
 function object(value: unknown): Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value) ? value as Record<string, unknown> : {};
 }
@@ -17,6 +18,12 @@ export function activityValue(value: unknown): string {
   return "None";
 }
 export const activityField = (field: string) => labels[field] ?? "Detail";
+/** Field-aware display: task statuses read as To do / In progress / Done, and assignees as members. */
+export function activityFieldValue(field: string, value: unknown): string {
+  if (field === "status" && typeof value === "string") return taskStatus[value] ?? value;
+  if (field === "assignee_id") return typeof value === "string" ? `Member ${value.slice(0, 8)}` : "Unassigned";
+  return activityValue(value);
+}
 export const activityActor = (event: ActivityEvent) => event.actor_name?.trim() || `Member ${event.actor_id.slice(0, 8)}`;
 export function activitySummary(event: ActivityEvent): string {
   const metadata = object(event.details);
@@ -35,6 +42,17 @@ export function activitySummary(event: ActivityEvent): string {
     case "member_removed": return `${member} access removed`;
     case "member_role_changed": return `${member} role changed from ${activityValue(metadata["previous_role"])} to ${activityValue(metadata["role"])}`;
     case "message_sent": return "Message sent";
+    case "task_created": {
+      const title = activityChanges(event).find((c) => c.field === "title")?.after;
+      return `Task added: ${activityValue(title)}`;
+    }
+    case "task_updated": {
+      const changes = activityChanges(event);
+      const change = changes[0];
+      if (changes.length === 1 && change?.field === "status") return `Task status changed from ${activityFieldValue("status", change.before)} to ${activityFieldValue("status", change.after)}`;
+      if (changes.length === 1 && change?.field === "assignee_id") return change.after == null ? "Task unassigned" : `Task assigned to ${activityFieldValue("assignee_id", change.after)}`;
+      return "Task updated";
+    }
     case "containment_plan_saved": return `Containment plan proposed: ${activityValue(metadata["title"])} (simulation only)`;
     default: return "Incident activity";
   }

@@ -61,7 +61,7 @@ describe("New incident submission", () => {
     client.setQueryData(incidentKeys.list("user-a"), []);
     render(<QueryClientProvider client={client}><NewIncidentForm userId="user-a" onCreated={onCreated} /></QueryClientProvider>);
     fireEvent.change(screen.getByLabelText("Title"), { target: { value: "  VPN compromise  " } });
-    fireEvent.change(screen.getByLabelText("Description"), { target: { value: "Confirmed login anomaly" } });
+    fireEvent.change(screen.getByLabelText(/^Description/), { target: { value: "Confirmed login anomaly" } });
     return { client, onCreated };
   }
   it("sends all four fields, locks duplicate submissions, invalidates the list and opens the returned ID", async () => {

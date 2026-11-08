@@ -12,7 +12,7 @@ export const Route = createFileRoute("/_authenticated")({
     return { authUser: data.user };
   },
   pendingComponent: () => (
-    <div className="sky flex min-h-screen items-center justify-center" role="status">
+    <div className="flex min-h-screen items-center justify-center bg-background" role="status">
       <p className="text-sm text-muted-foreground">Checking your session…</p>
     </div>
   ),

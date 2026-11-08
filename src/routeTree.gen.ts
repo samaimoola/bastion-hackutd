@@ -9,15 +9,22 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as InviteRouteImport } from './routes/invite'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedGuideRouteImport } from './routes/_authenticated/guide'
 import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
 import { Route as ApiGuideRouteImport } from './routes/api/guide'
 import { Route as AuthenticatedIncidentsIdRouteImport } from './routes/_authenticated/incidents.$id'
 
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
@@ -32,9 +39,14 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
-  id: '/',
-  path: '/',
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedGuideRoute = AuthenticatedGuideRouteImport.update({
@@ -60,32 +72,38 @@ const AuthenticatedIncidentsIdRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof AuthenticatedIndexRoute
+  '/': typeof IndexRoute
   '/invite': typeof InviteRoute
   '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
   '/guide': typeof AuthenticatedGuideRoute
   '/team': typeof AuthenticatedTeamRoute
   '/api/guide': typeof ApiGuideRoute
   '/incidents/$id': typeof AuthenticatedIncidentsIdRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof IndexRoute
   '/invite': typeof InviteRoute
   '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
   '/guide': typeof AuthenticatedGuideRoute
   '/team': typeof AuthenticatedTeamRoute
   '/api/guide': typeof ApiGuideRoute
-  '/': typeof AuthenticatedIndexRoute
   '/incidents/$id': typeof AuthenticatedIncidentsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/invite': typeof InviteRoute
   '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/guide': typeof AuthenticatedGuideRoute
   '/_authenticated/team': typeof AuthenticatedTeamRoute
   '/api/guide': typeof ApiGuideRoute
-  '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/incidents/$id': typeof AuthenticatedIncidentsIdRoute
 }
 export interface FileRouteTypes {
@@ -94,40 +112,55 @@ export interface FileRouteTypes {
     | '/'
     | '/invite'
     | '/login'
+    | '/signup'
+    | '/dashboard'
     | '/guide'
     | '/team'
     | '/api/guide'
     | '/incidents/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/'
     | '/invite'
     | '/login'
+    | '/signup'
+    | '/dashboard'
     | '/guide'
     | '/team'
     | '/api/guide'
-    | '/'
     | '/incidents/$id'
   id:
     | '__root__'
+    | '/'
     | '/_authenticated'
     | '/invite'
     | '/login'
+    | '/signup'
+    | '/_authenticated/dashboard'
     | '/_authenticated/guide'
     | '/_authenticated/team'
     | '/api/guide'
-    | '/_authenticated/'
     | '/_authenticated/incidents/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   InviteRoute: typeof InviteRoute
   LoginRoute: typeof LoginRoute
+  SignupRoute: typeof SignupRoute
   ApiGuideRoute: typeof ApiGuideRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -149,11 +182,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/': {
-      id: '/_authenticated/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedIndexRouteImport
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/guide': {
@@ -188,16 +228,16 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedGuideRoute: typeof AuthenticatedGuideRoute
   AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
-  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedIncidentsIdRoute: typeof AuthenticatedIncidentsIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedGuideRoute: AuthenticatedGuideRoute,
   AuthenticatedTeamRoute: AuthenticatedTeamRoute,
-  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedIncidentsIdRoute: AuthenticatedIncidentsIdRoute,
 }
 
@@ -205,9 +245,11 @@ const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   InviteRoute: InviteRoute,
   LoginRoute: LoginRoute,
+  SignupRoute: SignupRoute,
   ApiGuideRoute: ApiGuideRoute,
 }
 export const routeTree = rootRouteImport

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-provider";
 import { SimpleModeToggle } from "@/components/simple-mode";
 import { useSimpleMode } from "@/lib/simple-mode-context";
-import { BastionEmblem, CitySkyline } from "@/components/city-skyline";
+import { BastionEmblem } from "@/components/city-skyline";
 import { type Severity, type SystemStatus, type TaskStatus } from "@/lib/demo-store";
 
 export function DemoBanner() {
@@ -47,15 +47,14 @@ export function AppShell({ children, mode = "demo" }: { children: ReactNode; mod
     navigate({ to: "/login", replace: true });
   };
   return (
-    <div className="guide-dock sky relative min-h-screen">
-      <CitySkyline className="shell-skyline pointer-events-none fixed inset-x-0 bottom-0 h-[35vh] w-full" />
+    <div className="guide-dock relative min-h-screen bg-background">
       {mode === "demo" ? <DemoBanner /> : <div className="relative z-10 border-b border-border bg-background/90 px-4 py-1.5 text-center text-xs text-muted-foreground">{mode === "live" ? "Real incident · saved to your account" : "Bastion Guide · saved to your account"}</div>}
       <div className="relative flex min-h-[calc(100vh-29px)] flex-col">
         <header className="border-b border-border bg-transparent">
           <div className="mx-auto grid w-full max-w-6xl grid-cols-[1fr_auto] items-center gap-x-5 gap-y-3 px-5 py-4 sm:px-8 md:px-10 lg:grid-cols-[auto_1fr_auto] lg:px-12">
-          <Link to="/" aria-label="Bastion home"><Wordmark /></Link>
+          <Link to="/dashboard" aria-label="Bastion home"><Wordmark /></Link>
           <nav aria-label="Main navigation" className="order-3 col-span-2 grid grid-cols-2 gap-1 lg:order-none lg:col-span-1 lg:flex lg:justify-center">
-            <Link to="/" className={navCls} activeProps={navActive} activeOptions={{ exact: true }}><Siren className="h-4 w-4" aria-hidden /> Incidents</Link>
+            <Link to="/dashboard" className={navCls} activeProps={navActive} activeOptions={{ exact: true }}><Siren className="h-4 w-4" aria-hidden /> Incidents</Link>
             <Link to="/team" className={navCls} activeProps={navActive}><Users className="h-4 w-4" aria-hidden /> Team</Link>
           </nav>
           <div className="flex flex-wrap items-center justify-end gap-2">

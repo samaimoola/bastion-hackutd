@@ -17,16 +17,17 @@ export const terms = {
 
 export const fieldHints = {
   incidentTitle:
-    "A short name people will recognize, such as “Ransomware on finance file servers”.",
+    "A short working name is enough, such as “Ransomware on finance file servers”. You can rename it later.",
   incidentDescription:
-    "What happened, in a few sentences. Do not include passwords or other secrets.",
-  incidentSeverity: terms.severity,
+    "What you know so far, in a few sentences. Leave it blank if you are still finding out. Do not include passwords or other secrets.",
+  incidentSeverity: `${terms.severity} Pick your best estimate for now and change it as you learn more.`,
   incidentStage: "Choose the stage the team is in now. You can change it later.",
   resourceName: "The computer, server, account or service involved.",
   dataInvolved: "What information it holds, if known, such as payroll records.",
   assessment:
     "Confirmed means you have evidence. Suspected means it seems likely but is not proven yet.",
-  dataConditions: "Tick everything that applies. Choose Unknown if you are not sure yet.",
+  dataConditions:
+    "Tick what you know happened. Choose Unknown if it has not been checked yet. An unticked box means not recorded, not ruled out.",
   containmentStatus: `${terms.containment} Choose not contained, in progress, or contained.`,
   investigationNotes: "What has been checked so far and what is still unknown.",
   message:
@@ -43,7 +44,7 @@ export const tabPurpose: Record<"live" | "demo", Record<WorkspaceTab, string>> =
     overview: "A summary of the incident and links to everything you can do.",
     systems: "The computers, accounts and data involved, and whether each one is contained.",
     tasks:
-      "Tasks are not available for real incidents yet. The demo workspace shows how they work.",
+      "Shared tasks for this incident: what needs doing, who is on it, and its status.",
     timeline: "A record of changes to this incident, newest first.",
     chat: "Messages for everyone working on this incident.",
     lab: "Try “what if we isolate this system?” before deciding. It is a simulation and changes nothing.",

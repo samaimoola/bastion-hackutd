@@ -7,6 +7,7 @@ const { members, membership, issue, change, remove } = vi.hoisted(() => ({ membe
 vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
 vi.mock("@tanstack/react-router", () => ({ useNavigate: () => vi.fn() }));
 vi.mock("@/lib/incidents.functions", () => ({ getIncidentMembership: membership, getIncident: vi.fn(), listIncidents: vi.fn() }));
+vi.mock("@/lib/signup-invitations.functions", () => ({ getSignupInvitationStatus: vi.fn().mockResolvedValue({ readiness: "not_ready" }), issueSignupInvitation: vi.fn() }));
 vi.mock("@/lib/incident-access.functions", () => ({ listIncidentMembers: members, issueIncidentInvitation: issue, changeIncidentMember: change, removeIncidentMember: remove }));
 const id = "11111111-1111-1111-1111-111111111111";
 const userId = "22222222-2222-2222-2222-222222222222";
@@ -25,6 +26,13 @@ it("does not expose invitation or membership controls to viewers", async () => {
   await screen.findByText("Only commanders can invite people or change access.");
   expect(screen.queryByRole("button", { name: "Generate invitation link" })).toBeNull();
   expect(screen.queryByRole("combobox")).toBeNull();
+  expect(screen.queryByRole("heading", { name: "Invite someone without an account" })).toBeNull();
+});
+it("keeps account invitations separate from incident access links", async () => {
+  membership.mockResolvedValue("commander"); mount();
+  expect(await screen.findByRole("heading", { name: "Add someone with an existing account" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Invite someone without an account" })).toBeInTheDocument();
+  expect(await screen.findByText(/Account invitations are not set up for this workspace yet/)).toBeInTheDocument();
 });
 it("generates a responder invitation using the existing incident only", async () => {
   membership.mockResolvedValue("commander"); issue.mockResolvedValue({ token: "a".repeat(64), expiresAt: "2026-11-09T00:00:00Z" }); mount();

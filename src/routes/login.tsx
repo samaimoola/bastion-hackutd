@@ -1,9 +1,8 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { ChevronRight, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DemoBanner, Wordmark } from "@/components/app-shell";
-import { CitySkyline } from "@/components/city-skyline";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,7 +29,7 @@ function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => { if (data.user) navigate({ to: "/", replace: true }); });
+    supabase.auth.getUser().then(({ data }) => { if (data.user) navigate({ to: "/dashboard", replace: true }); });
   }, [navigate]);
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,15 +40,14 @@ function Login() {
         setError(error.message === "Invalid login credentials" ? "Email or password is incorrect." : error.message);
         return;
       }
-      navigate({ to: "/", replace: true });
+      navigate({ to: "/dashboard", replace: true });
     } catch {
       setError("Could not reach the sign-in service. Check your connection and try again.");
     } finally { setLoading(false); }
   };
   return (
-    <div className="sky relative min-h-screen overflow-hidden">
+    <div className="relative min-h-screen bg-background">
       <DemoBanner />
-      <CitySkyline variant="hero" className="pointer-events-none absolute inset-x-0 bottom-0 h-[75vh] w-full" />
       <div className="relative mx-auto flex max-w-7xl items-center justify-between px-6 py-6 sm:px-10"><Wordmark /><ThemeToggle compact /></div>
       <div className="relative mx-auto grid max-w-7xl justify-items-center gap-8 px-6 pb-16 pt-6 sm:px-10 sm:pt-10">
         <div className="fade-in max-w-xl text-center">
@@ -59,7 +57,7 @@ function Login() {
         </div>
         <div className="panel fade-in w-full max-w-[420px] p-6 sm:p-8">
           <h2 className="text-2xl font-medium">Sign in</h2>
-          <p className="mt-2 text-sm text-muted-foreground">Use the account your administrator created for you. There is no public sign-up.</p>
+          <p className="mt-2 text-sm text-muted-foreground">Use your own Bastion account. Accounts are created by an administrator or with an invitation from an incident commander.</p>
           <form onSubmit={submit} className="mt-6 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Work email</Label>
@@ -74,6 +72,20 @@ function Login() {
               {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden /> Signing in…</> : "Sign in"}
             </Button>
           </form>
+          <p className="mt-6 text-center text-sm text-muted-foreground">
+            New to Bastion? <Link to="/signup" className="font-medium text-primary underline-offset-4 hover:underline">Create an account with an invitation</Link>
+          </p>
+          {/* Static guidance; mirrors docs/isolation-boundary.md. Sign-in itself is unchanged. */}
+          <details className="group mt-6 border-t border-border pt-4 text-sm">
+            <summary className="flex min-h-11 cursor-pointer items-center gap-2 font-medium [&::-webkit-details-marker]:hidden">
+              <ChevronRight className="size-4 shrink-0 transition-transform group-open:rotate-90" aria-hidden />Access during an outage
+            </summary>
+            <div className="mt-2 space-y-2 text-muted-foreground">
+              <p>Sign-in uses only your Bastion email and password. It does not use your company&rsquo;s single sign-on or VPN, and nothing is sent to your email or phone.</p>
+              <p>You still need internet access to this site and to Bastion&rsquo;s hosting provider. Bastion does not work offline. If company systems may be compromised, use a trusted device on a separate connection, such as a phone hotspot.</p>
+              <p>Set up your account in advance. Accounts are created only by an administrator or with a one-use invitation code from an incident commander, and there is no self-service password reset, so if you cannot sign in, contact your Bastion administrator.</p>
+            </div>
+          </details>
         </div>
       </div>
     </div>

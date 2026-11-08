@@ -95,7 +95,7 @@ describe("Simple-mode navigation", () => {
     return screen.findAllByRole("menuitem");
   };
 
-  it("uses everyday labels and hides real-incident Tasks entirely", async () => {
+  it("uses everyday labels and offers real-incident Tasks under More tools", async () => {
     bar("live");
     await waitFor(() =>
       expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual([
@@ -107,9 +107,9 @@ describe("Simple-mode navigation", () => {
     );
     const items = await openMore();
     expect(items.map((i) => i.querySelector("span")?.textContent)).toEqual([
+      "Tasks",
       "Compare isolation options",
     ]);
-    expect(screen.queryByText("Tasks")).toBeNull();
   });
 
   it("keeps demo Tasks reachable under More tools", async () => {

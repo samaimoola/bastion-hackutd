@@ -14,6 +14,7 @@ vi.mock("@/components/incident-team-access", () => ({ IncidentTeamAccess: () => 
 vi.mock("@/components/real-affected-systems", () => ({ RealAffectedSystems: () => <button disabled>Add system</button> }));
 vi.mock("@/components/real-communications", () => ({ RealCommunications: () => <button disabled>Send message</button> }));
 vi.mock("@/components/real-timeline", () => ({ RealTimeline: () => <button disabled>Refresh</button> }));
+vi.mock("@/components/real-tasks", () => ({ RealTasks: () => <button disabled>Add task</button> }));
 afterEach(cleanup);
 const incident = { id: "3f2b8c1e-5a4d-4e6f-9b7a-1c2d3e4f5a6b", title: "Real incident", summary: "Recorded description", severity: "High" as const, stage: "Recovery" as const, declaredAt: "2026-11-07T22:00:00Z", lastUpdate: "2026-11-07T22:00:00Z" };
 
@@ -37,7 +38,7 @@ it("real overview explains the incident and offers only connected sections, with
   const tabs = [...panel.querySelectorAll("a[data-tab]")].map((a) => a.getAttribute("data-tab"));
   expect(tabs).toEqual(["systems", "timeline", "chat", "lab"]);
   expect(tabs).not.toContain("tasks"); // unconnected for real incidents; still reachable from the tab list
-  expect(panel).toHaveTextContent("Tasks and next steps are not available for real incidents yet.");
+  expect(panel).toHaveTextContent("Next steps are not available for real incidents yet. The Tasks tab says whether shared tasks are set up for this workspace.");
   expect(write).not.toHaveBeenCalled();
   expect(demo).not.toHaveBeenCalled();
 });

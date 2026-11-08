@@ -180,7 +180,7 @@ describe("Simple mode screens", () => {
     render(form());
     await waitFor(() =>
       expect(screen.getByLabelText("Severity")).toHaveAccessibleDescription(
-        "How serious the incident is. Critical is the most serious and Low the least.",
+        "How serious the incident is. Critical is the most serious and Low the least. Pick your best estimate for now and change it as you learn more.",
       ),
     );
     expect(screen.getByLabelText("Response stage")).toHaveAccessibleDescription(
