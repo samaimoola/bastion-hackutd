@@ -20,6 +20,7 @@ import { incidentDetailOptions } from "@/lib/incident-queries";
 import { getIncidentInputSchema, NOT_FOUND_MESSAGE } from "@/lib/incident-models";
 import { IncidentError, IncidentLoading, IncidentNotFound } from "@/components/incident-states";
 import { LiveIncidentWorkspace } from "@/components/live-incident-workspace";
+import { ContainmentSandbox } from "@/components/containment-lab";
 
 const stages: Stage[] = ["Detection", "Containment", "Eradication", "Recovery", "Post-incident"];
 const severities: Severity[] = ["Critical", "High", "Medium", "Low"];
@@ -101,7 +102,7 @@ function DemoWorkspace() {
       <Tabs value={tab} onValueChange={setTab} className="mt-3">
         <div className="max-w-full overflow-x-auto">
           <TabsList aria-label="Incident workspace" className="h-auto min-w-max justify-start gap-4 rounded-none border-b border-border bg-transparent p-0 [&>button]:min-h-11 [&>button]:rounded-none [&>button]:border-b-2 [&>button]:border-transparent [&>button]:bg-transparent [&>button]:px-1 [&>button]:text-sm [&>button]:text-muted-foreground [&>button]:shadow-none [&>button:hover]:text-foreground [&>button[data-state=active]]:border-primary [&>button[data-state=active]]:text-foreground">
-            <TabsTrigger value="overview">Overview</TabsTrigger><TabsTrigger value="timeline">Timeline</TabsTrigger><TabsTrigger value="systems">Affected Systems &amp; Data</TabsTrigger><TabsTrigger value="tasks">Tasks</TabsTrigger><TabsTrigger value="chat">Communications</TabsTrigger>
+            <TabsTrigger value="overview">Overview</TabsTrigger><TabsTrigger value="timeline">Timeline</TabsTrigger><TabsTrigger value="systems">Affected Systems &amp; Data</TabsTrigger><TabsTrigger value="tasks">Tasks</TabsTrigger><TabsTrigger value="chat">Communications</TabsTrigger><TabsTrigger value="lab">Containment Lab</TabsTrigger>
           </TabsList>
         </div>
         <TabsContent className="fade-in mt-5" value="overview"><WorkspaceOverview onUpdate={addUpdate} onSystems={() => setTab("systems")} onTasks={() => setTab("tasks")}><OverviewTab /></WorkspaceOverview></TabsContent>
@@ -109,6 +110,7 @@ function DemoWorkspace() {
         <TabsContent className="fade-in mt-5" value="systems"><SystemsTab /></TabsContent>
         <TabsContent className="fade-in mt-5" value="tasks"><TasksTab /></TabsContent>
         <TabsContent className="fade-in mt-5" value="chat"><ChatTab /></TabsContent>
+        <TabsContent className="fade-in mt-5" value="lab"><ContainmentSandbox /></TabsContent>
       </Tabs>
     </AppShell>
   );
